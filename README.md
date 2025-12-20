@@ -1,118 +1,186 @@
-# QingLong Panel (Go Implementation)
+# 白虎面板 (Baihu Panel)
 
-This is a Go implementation of the popular QingLong Panel, a task management system for automated scripts.
+<p align="center">
+  <strong>轻量级定时任务管理系统</strong>
+</p>
 
-## Features
+<p align="center">
+  基于 Go + Vue 3 构建，单文件部署，开箱即用
+</p>
 
-- Task scheduling and management
-- RESTful API
-- User authentication
-- Environment variable management
-- Script file management
-- Task execution and logging
-- Web interface
-- Docker support
+<p align="center">
+  <a href="#功能特性">功能特性</a> •
+  <a href="#快速开始">快速开始</a> •
+  <a href="#配置说明">配置说明</a> •
+  <a href="#开发指南">开发指南</a>
+</p>
 
-## Project Structure
+---
+
+## ✨ 功能特性
+
+### 📋 定时任务管理
+- 支持标准 Cron 表达式调度
+- 常用时间规则快捷选择
+- 任务启用/禁用状态切换
+- 手动触发执行
+- 任务超时控制
+
+### 📝 脚本文件管理
+- 在线代码编辑器
+- 文件树形结构展示
+- 支持创建、重命名、删除文件/文件夹
+- 支持压缩包上传解压
+- 支持多文件批量上传
+
+### 🖥️ 在线终端
+- WebSocket 实时终端
+- 支持常用 Shell 命令
+- 命令执行结果实时输出
+
+### 📊 执行日志
+- 任务执行历史记录
+- 执行状态追踪（成功/失败/超时）
+- 执行耗时统计
+- 日志内容压缩存储
+- 支持按任务名称搜索
+- 日志自动清理
+
+### 🔐 环境变量
+- 安全存储敏感配置
+- 变量值脱敏显示
+- 任务执行时自动注入
+
+### ⚙️ 系统设置
+- 站点标题、标语自定义
+- 站点图标自定义（SVG）
+- 分页大小配置
+- Cookie 有效期配置
+- 密码修改
+- 系统信息查看
+
+### 🎨 界面特性
+- 响应式设计
+- 深色/浅色主题切换
+- 现代化 UI 组件
+
+### 🔒 安全特性
+- JWT Token 认证
+- 密码加盐哈希存储
+- 启动时自动生成随机密钥
+- Cookie HttpOnly 保护
+
+---
+
+## 🚀 快速开始
+
+### 方式一：Docker 部署（推荐）
+
+**使用预构建镜像：**
+
+```bash
+docker run -d \
+  --name baihu \
+  -p 8052:8052 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/configs:/app/configs \
+  -e TZ=Asia/Shanghai \
+  --restart unless-stopped \
+  ghcr.io/engigu/baihu:main
+```
+
+**使用 Docker Compose：**
+
+创建 `docker-compose.yml`：
+
+```yaml
+version: '3.8'
+
+services:
+  baihu:
+    image: ghcr.io/engigu/baihu:main
+    container_name: baihu
+    ports:
+      - "8052:8052"
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+```
+
+启动服务：
+
+```bash
+docker-compose up -d
+```
+
+### 方式二：本地构建运行
+
+**环境要求：**
+- Go 1.21+
+- Node.js 18+
+- Make
+
+**构建步骤：**
+
+```bash
+# 克隆项目
+git clone https://github.com/engigu/baihu.git
+cd baihu
+
+# 安装依赖
+make deps
+cd web && npm install && cd ..
+
+# 构建前端 + 后端
+make build-all
+
+# 运行
+./baihu
+```
+
+### 访问面板
+
+启动后访问：http://localhost:8052
+
+**默认账号：**
+- 用户名：`admin`
+- 密码：`123456`
+
+> ⚠️ **安全提示**：首次登录后请立即修改默认密码
+
+---
+
+## 📁 目录结构
 
 ```
-├── main.go              # Application entry point
-├── go.mod               # Go modules definition
-├── go.sum               # Go modules checksums
-├── Dockerfile           # Docker configuration
-├── docker-compose.yml   # Docker Compose configuration
-├── configs/             # Configuration files
-├── internal/
-│   ├── controllers/     # HTTP handlers
-│   ├── models/          # Data structures
-│   ├── services/        # Business logic
-│   └── utils/           # Utility functions
-├── web/
-│   ├── static/          # Static assets (CSS, JS, images)
-│   └── templates/       # HTML templates
-├── data/                # Data storage
-├── logs/                # Log files
-└── scripts/             # User scripts
+./
+├── baihu                 # 可执行文件
+├── data/                 # 数据目录（自动创建）
+│   ├── ql.db             # SQLite 数据库
+│   └── scripts/          # 脚本文件存储
+└── configs/
+    └── config.json       # 配置文件（自动创建）
 ```
 
-## Getting Started
+---
 
-### Using Go directly
+## ⚙️ 配置说明
 
-1. Install Go (version 1.21 or higher)
-2. Clone the repository
-3. Run `go mod tidy` to install dependencies
-4. Run `go run main.go` to start the server
-
-### Using Docker
-
-1. Install Docker and Docker Compose
-2. Run `docker-compose up -d` to start the server
-
-The server will start on port 8080.
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-
-### Tasks
-- `GET /api/tasks` - Get all tasks
-- `POST /api/tasks` - Create a new task
-- `GET /api/tasks/:id` - Get a specific task
-- `PUT /api/tasks/:id` - Update a specific task
-- `DELETE /api/tasks/:id` - Delete a specific task
-
-### Task Execution
-- `POST /api/execute/task/:id` - Execute a task by ID
-- `POST /api/execute/command` - Execute a command directly
-- `GET /api/execute/results` - Get last execution results
-
-### Environment Variables
-- `GET /api/env` - Get all environment variables
-- `POST /api/env` - Create a new environment variable
-- `GET /api/env/:id` - Get a specific environment variable
-- `PUT /api/env/:id` - Update a specific environment variable
-- `DELETE /api/env/:id` - Delete a specific environment variable
-
-### Scripts
-- `GET /api/scripts` - Get all scripts
-- `POST /api/scripts` - Create a new script
-- `GET /api/scripts/:id` - Get a specific script
-- `PUT /api/scripts/:id` - Update a specific script
-- `DELETE /api/scripts/:id` - Delete a specific script
-
-## Web Interface
-
-- `/` - Dashboard
-- `/login` - Login page
-- `/tasks` - Task management
-- `/scripts` - Script management
-- `/environments` - Environment variable management
-
-## Default Admin User
-
-Username: `admin`
-Password: `admin123`
-
-## Configuration
-
-The application can be configured using the `configs/config.json` file:
+配置文件路径：`configs/config.json`
 
 ```json
 {
   "server": {
-    "port": 8080,
+    "port": 8052,
     "host": "0.0.0.0"
   },
   "database": {
     "type": "sqlite",
-    "path": "./data/ql.db"
-  },
-  "security": {
-    "jwt_secret": "ql_panel_secret_key",
-    "password_salt": "ql_panel_salt"
+    "path": "./data/ql.db",
+    "table_prefix": "baihu_"
   },
   "task": {
     "default_timeout": 3600,
@@ -121,18 +189,184 @@ The application can be configured using the `configs/config.json` file:
 }
 ```
 
-## Docker Support
+### 配置项说明
 
-The application includes Docker support for easy deployment:
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `server.port` | 服务端口 | 8052 |
+| `server.host` | 监听地址 | 0.0.0.0 |
+| `database.type` | 数据库类型 | sqlite |
+| `database.path` | 数据库路径 | ./data/ql.db |
+| `database.table_prefix` | 表前缀 | baihu_ |
+| `task.default_timeout` | 任务默认超时（秒） | 3600 |
+| `task.log_retention_days` | 日志保留天数 | 30 |
 
-1. Build the Docker image: `docker build -t baihu .`
-2. Run the container: `docker run -p 8080:8080 baihu`
+### 站点设置
 
-Or use Docker Compose:
-```bash
-docker-compose up -d
+以下设置可在管理面板「系统设置 > 站点设置」中配置：
+
+| 设置项 | 说明 | 默认值 |
+|--------|------|--------|
+| 站点标题 | 显示在浏览器标签和侧边栏 | 白虎面板 |
+| 站点标语 | 显示在登录页 | 轻量级定时任务管理系统 |
+| 站点图标 | SVG 格式，用于 favicon 和登录页 | 内置图标 |
+| 分页大小 | 列表每页显示条数 | 10 |
+| Cookie 有效期 | 登录状态保持天数 | 7 |
+
+---
+
+## 🛠️ 技术栈
+
+### 后端
+- **Go 1.21+** - 编程语言
+- **Gin** - Web 框架
+- **GORM** - ORM 框架
+- **SQLite** - 嵌入式数据库
+- **JWT** - 身份认证
+- **Cron** - 定时任务调度
+- **WebSocket** - 实时通信
+
+### 前端
+- **Vue 3** - 前端框架
+- **TypeScript** - 类型安全
+- **Vite** - 构建工具
+- **Tailwind CSS** - 样式框架
+- **Shadcn/ui** - UI 组件库
+- **Xterm.js** - 终端模拟器
+
+### 部署
+- **Docker** - 容器化部署
+- **GitHub Actions** - CI/CD
+- **Multi-arch** - 支持 amd64/arm64
+
+---
+
+## 📖 开发指南
+
+### 项目结构
+
+```
+├── main.go                    # 入口文件
+├── internal/
+│   ├── bootstrap/             # 应用启动
+│   ├── constant/              # 常量定义
+│   ├── controllers/           # 控制器层
+│   ├── database/              # 数据库初始化
+│   ├── middleware/            # 中间件
+│   ├── models/                # 数据模型
+│   ├── router/                # 路由注册
+│   ├── services/              # 业务逻辑层
+│   ├── static/                # 静态文件嵌入
+│   └── utils/                 # 工具函数
+├── web/                       # 前端项目
+│   ├── src/
+│   │   ├── api/               # API 接口
+│   │   ├── components/        # 公共组件
+│   │   ├── composables/       # 组合式函数
+│   │   ├── layouts/           # 布局组件
+│   │   ├── router/            # 路由配置
+│   │   └── views/             # 页面视图
+│   └── ...
+├── configs/                   # 配置文件
+├── data/                      # 数据目录
+├── Dockerfile                 # Docker 构建
+├── Makefile                   # 构建脚本
+└── README.md
 ```
 
-## Contributing
+### 开发命令
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+```bash
+# 安装 Go 依赖
+make deps
+
+# 安装前端依赖
+cd web && npm install
+
+# 前端开发模式（热重载）
+cd web && npm run dev
+
+# 构建前端
+make build-web
+
+# 构建后端
+make build
+
+# 构建全部（前端 + 后端）
+make build-all
+
+# 清理构建产物
+make clean
+
+# Docker 构建
+make docker-build
+
+# Docker Compose 启动
+make docker-up
+
+# Docker Compose 停止
+make docker-down
+```
+
+### API 接口
+
+#### 认证相关
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/auth/login` | 用户登录 |
+| POST | `/api/auth/logout` | 用户登出 |
+| GET | `/api/auth/me` | 获取当前用户 |
+
+#### 任务管理
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/tasks` | 获取任务列表 |
+| POST | `/api/tasks` | 创建任务 |
+| GET | `/api/tasks/:id` | 获取任务详情 |
+| PUT | `/api/tasks/:id` | 更新任务 |
+| DELETE | `/api/tasks/:id` | 删除任务 |
+| POST | `/api/execute/task/:id` | 执行任务 |
+
+#### 环境变量
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/env` | 获取变量列表 |
+| POST | `/api/env` | 创建变量 |
+| PUT | `/api/env/:id` | 更新变量 |
+| DELETE | `/api/env/:id` | 删除变量 |
+
+#### 脚本文件
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/files/tree` | 获取文件树 |
+| GET | `/api/files/content` | 获取文件内容 |
+| POST | `/api/files/content` | 保存文件内容 |
+| POST | `/api/files/create` | 创建文件/文件夹 |
+| POST | `/api/files/delete` | 删除文件/文件夹 |
+| POST | `/api/files/upload` | 上传压缩包 |
+
+#### 执行日志
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/logs` | 获取日志列表 |
+| GET | `/api/logs/:id` | 获取日志详情 |
+
+#### 系统设置
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/settings/site` | 获取站点设置 |
+| PUT | `/api/settings/site` | 更新站点设置 |
+| POST | `/api/settings/password` | 修改密码 |
+| GET | `/api/settings/about` | 获取系统信息 |
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+---
+
+## 📄 License
+
+[MIT License](LICENSE)

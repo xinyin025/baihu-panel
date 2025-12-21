@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -179,12 +180,16 @@ func (es *ExecutorService) ExecuteTask(taskID int) *ExecutionResult {
 	es.runningTasks[taskID] = true
 	es.mu.Unlock()
 
+	// 加载环境变量
+	envService := NewEnvService()
+	envVars := envService.GetEnvVarsByIDs(task.Envs)
+
 	// 使用任务配置的超时时间
 	timeout := task.Timeout
 	if timeout <= 0 {
 		timeout = constant.DefaultTaskTimeout
 	}
-	result := es.ExecuteCommandWithTimeout(task.Command, time.Duration(timeout)*time.Minute)
+	result := es.ExecuteCommandWithEnv(task.Command, time.Duration(timeout)*time.Minute, envVars)
 	result.TaskID = taskID
 
 	// 标记任务结束
@@ -212,6 +217,11 @@ func (es *ExecutorService) ExecuteCommand(command string) *ExecutionResult {
 
 // ExecuteCommandWithTimeout executes a shell command with specified timeout
 func (es *ExecutorService) ExecuteCommandWithTimeout(command string, timeout time.Duration) *ExecutionResult {
+	return es.ExecuteCommandWithEnv(command, timeout, nil)
+}
+
+// ExecuteCommandWithEnv executes a shell command with specified timeout and environment variables
+func (es *ExecutorService) ExecuteCommandWithEnv(command string, timeout time.Duration, envVars []string) *ExecutionResult {
 	result := &ExecutionResult{
 		Success: false,
 		Start:   time.Now(),
@@ -225,6 +235,11 @@ func (es *ExecutorService) ExecuteCommandWithTimeout(command string, timeout tim
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	// 设置环境变量：继承系统环境变量 + 自定义环境变量
+	if len(envVars) > 0 {
+		cmd.Env = append(os.Environ(), envVars...)
+	}
 
 	err := cmd.Run()
 	result.End = time.Now()

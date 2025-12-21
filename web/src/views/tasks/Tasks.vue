@@ -6,12 +6,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Badge } from '@/components/ui/badge'
 import Pagination from '@/components/Pagination.vue'
-import { Plus, Play, Pencil, Trash2, Search } from 'lucide-vue-next'
-import { api, type Task } from '@/api'
+import { Plus, Play, Pencil, Trash2, Search, ScrollText, ChevronDown, X } from 'lucide-vue-next'
+import { api, type Task, type EnvVar } from '@/api'
 import { toast } from 'vue-sonner'
 import { useSiteSettings } from '@/composables/useSiteSettings'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const { pageSize } = useSiteSettings()
 
 const tasks = ref<Task[]>([])
@@ -24,6 +28,11 @@ const deleteTaskId = ref<number | null>(null)
 // 清理配置
 const cleanType = ref('')
 const cleanKeep = ref(30)
+
+// 环境变量
+const allEnvVars = ref<EnvVar[]>([])
+const selectedEnvIds = ref<number[]>([])
+const envSearchQuery = ref('')
 
 const filterName = ref('')
 const currentPage = ref(1)
@@ -48,6 +57,45 @@ const cleanConfig = computed(() => {
   return JSON.stringify({ type: cleanType.value, keep: cleanKeep.value })
 })
 
+// 过滤后的环境变量列表（排除已选中的）
+const filteredEnvVars = computed(() => {
+  return allEnvVars.value.filter(env => {
+    const matchSearch = !envSearchQuery.value || env.name.toLowerCase().includes(envSearchQuery.value.toLowerCase())
+    const notSelected = !selectedEnvIds.value.includes(env.id)
+    return matchSearch && notSelected
+  })
+})
+
+// 已选中的环境变量对象列表
+const selectedEnvs = computed(() => {
+  return selectedEnvIds.value
+    .map(id => allEnvVars.value.find(e => e.id === id))
+    .filter((e): e is EnvVar => e !== undefined)
+})
+
+// 计算 envs 字符串
+const envsString = computed(() => selectedEnvIds.value.join(','))
+
+async function loadEnvVars() {
+  try {
+    allEnvVars.value = await api.env.all()
+  } catch { /* ignore */ }
+}
+
+function addEnv(id: number) {
+  if (!selectedEnvIds.value.includes(id)) {
+    selectedEnvIds.value.push(id)
+  }
+  envSearchQuery.value = ''
+}
+
+function removeEnv(id: number) {
+  const idx = selectedEnvIds.value.indexOf(id)
+  if (idx !== -1) {
+    selectedEnvIds.value.splice(idx, 1)
+  }
+}
+
 async function loadTasks() {
   try {
     const res = await api.tasks.list({ page: currentPage.value, page_size: pageSize.value, name: filterName.value || undefined })
@@ -70,9 +118,11 @@ function handlePageChange(page: number) {
 }
 
 function openCreate() {
-  editingTask.value = { name: '', command: '', schedule: '0 * * * * *', timeout: 30, enabled: true, clean_config: '' }
+  editingTask.value = { name: '', command: '', schedule: '0 * * * * *', timeout: 30, enabled: true, clean_config: '', envs: '' }
   cleanType.value = 'none'
   cleanKeep.value = 30
+  selectedEnvIds.value = []
+  envSearchQuery.value = ''
   isEdit.value = false
   showDialog.value = true
 }
@@ -93,6 +143,13 @@ function openEdit(task: Task) {
     cleanType.value = 'none'
     cleanKeep.value = 30
   }
+  // 解析环境变量
+  if (task.envs) {
+    selectedEnvIds.value = task.envs.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+  } else {
+    selectedEnvIds.value = []
+  }
+  envSearchQuery.value = ''
   isEdit.value = true
   showDialog.value = true
 }
@@ -100,6 +157,7 @@ function openEdit(task: Task) {
 async function saveTask() {
   try {
     editingTask.value.clean_config = cleanConfig.value
+    editingTask.value.envs = envsString.value
     if (isEdit.value && editingTask.value.id) {
       await api.tasks.update(editingTask.value.id, editingTask.value)
       toast.success('任务已更新')
@@ -134,13 +192,20 @@ async function runTask(id: number) {
 
 async function toggleTask(task: Task, enabled: boolean) {
   try {
-    await api.tasks.update(task.id, { name: task.name, command: task.command, schedule: task.schedule, timeout: task.timeout, clean_config: task.clean_config, enabled })
+    await api.tasks.update(task.id, { name: task.name, command: task.command, schedule: task.schedule, timeout: task.timeout, clean_config: task.clean_config, envs: task.envs, enabled })
     toast.success(enabled ? '任务已启用' : '任务已禁用')
     loadTasks()
   } catch { toast.error('操作失败') }
 }
 
-onMounted(loadTasks)
+function viewLogs(taskId: number) {
+  router.push({ path: '/history', query: { task_id: String(taskId) } })
+}
+
+onMounted(() => {
+  loadTasks()
+  loadEnvVars()
+})
 </script>
 
 <template>
@@ -171,7 +236,7 @@ onMounted(loadTasks)
         <span class="w-40 shrink-0">上次执行</span>
         <span class="w-40 shrink-0">下次执行</span>
         <span class="w-12 shrink-0 text-center">状态</span>
-        <span class="w-28 shrink-0 text-center">操作</span>
+        <span class="w-36 shrink-0 text-center">操作</span>
       </div>
       <!-- 列表 -->
       <div class="divide-y">
@@ -192,9 +257,12 @@ onMounted(loadTasks)
           <span class="w-12 flex justify-center shrink-0 cursor-pointer" @click="toggleTask(task, !task.enabled)" :title="task.enabled ? '点击禁用' : '点击启用'">
             <span :class="['w-2 h-2 rounded-full', task.enabled ? 'bg-green-500' : 'bg-gray-400']" />
           </span>
-          <span class="w-28 shrink-0 flex justify-center gap-1">
+          <span class="w-36 shrink-0 flex justify-center gap-1">
             <Button variant="ghost" size="icon" class="h-7 w-7" @click="runTask(task.id)" title="执行">
               <Play class="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" class="h-7 w-7" @click="viewLogs(task.id)" title="日志">
+              <ScrollText class="h-3.5 w-3.5" />
             </Button>
             <Button variant="ghost" size="icon" class="h-7 w-7" @click="openEdit(task)" title="编辑">
               <Pencil class="h-3.5 w-3.5" />
@@ -261,6 +329,47 @@ onMounted(loadTasks)
                 </SelectContent>
               </Select>
               <Input v-if="cleanType && cleanType !== 'none'" v-model.number="cleanKeep" type="number" :placeholder="cleanType === 'day' ? '保留天数' : '保留条数'" class="flex-1" />
+            </div>
+          </div>
+          <div class="grid grid-cols-4 items-start gap-4">
+            <Label class="text-right pt-2">环境变量</Label>
+            <div class="col-span-3 space-y-2">
+              <Popover>
+                <PopoverTrigger as-child>
+                  <Button variant="outline" class="w-full justify-between font-normal">
+                    <span class="text-muted-foreground">搜索并添加环境变量...</span>
+                    <ChevronDown class="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-[300px] p-2" align="start">
+                  <Input v-model="envSearchQuery" placeholder="搜索环境变量..." class="mb-2 h-8" />
+                  <div v-if="filteredEnvVars.length === 0" class="text-sm text-muted-foreground text-center py-2">
+                    {{ allEnvVars.length === 0 ? '暂无环境变量' : '无匹配结果' }}
+                  </div>
+                  <div v-else class="max-h-[160px] overflow-y-auto space-y-1">
+                    <div
+                      v-for="env in filteredEnvVars"
+                      :key="env.id"
+                      class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                      @click="addEnv(env.id)"
+                    >
+                      <Plus class="h-3.5 w-3.5 text-muted-foreground" />
+                      <span class="truncate">{{ env.name }}</span>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <div v-if="selectedEnvs.length > 0" class="flex flex-wrap gap-1.5">
+                <Badge
+                  v-for="env in selectedEnvs"
+                  :key="env.id"
+                  variant="secondary"
+                  class="gap-1 pr-1"
+                >
+                  {{ env.name }}
+                  <X class="h-3 w-3 cursor-pointer hover:text-destructive" @click="removeEnv(env.id)" />
+                </Badge>
+              </div>
             </div>
           </div>
         </div>

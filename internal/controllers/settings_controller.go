@@ -62,24 +62,7 @@ func (sc *SettingsController) ChangePassword(c *gin.Context) {
 	utils.SuccessMsg(c, "密码修改成功")
 }
 
-// CleanLogs 清理日志
-func (sc *SettingsController) CleanLogs(c *gin.Context) {
-	var req struct {
-		Days int `json:"days" binding:"required,min=1"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, "参数错误")
-		return
-	}
-
-	cutoff := time.Now().AddDate(0, 0, -req.Days)
-	result := database.DB.Where("created_at < ?", cutoff).Delete(&models.TaskLog{})
-
-	utils.Success(c, gin.H{
-		"deleted": result.RowsAffected,
-	})
-}
+// CleanLogs 清理日志 - 已移除，改为任务级别的日志清理配置
 
 // GetSiteSettings 获取站点设置
 func (sc *SettingsController) GetSiteSettings(c *gin.Context) {

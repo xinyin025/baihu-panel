@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PasswordSettings from './PasswordSettings.vue'
-import LogsSettings from './LogsSettings.vue'
 import SiteSettings from './SiteSettings.vue'
 import AboutSettings from './AboutSettings.vue'
 
@@ -20,7 +19,6 @@ const activeTab = ref('password')
     <Tabs v-model="activeTab" class="w-full">
       <TabsList>
         <TabsTrigger value="password">密码修改</TabsTrigger>
-        <TabsTrigger value="logs">日志清理</TabsTrigger>
         <TabsTrigger value="site">站点设置</TabsTrigger>
         <TabsTrigger value="about">关于</TabsTrigger>
       </TabsList>
@@ -33,18 +31,6 @@ const activeTab = ref('password')
           </CardHeader>
           <CardContent>
             <PasswordSettings />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="logs" class="mt-6">
-        <Card class="max-w-lg">
-          <CardHeader>
-            <CardTitle>日志清理</CardTitle>
-            <CardDescription>清理历史执行日志以释放存储空间</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LogsSettings />
           </CardContent>
         </Card>
       </TabsContent>

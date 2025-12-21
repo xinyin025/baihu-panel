@@ -43,6 +43,12 @@ func (ec *EnvController) GetEnvVars(c *gin.Context) {
 	utils.PaginatedResponse(c, envVars, total, p)
 }
 
+func (ec *EnvController) GetAllEnvVars(c *gin.Context) {
+	userID := 1
+	envVars := ec.envService.GetEnvVarsByUserID(userID)
+	utils.Success(c, envVars)
+}
+
 func (ec *EnvController) GetEnvVar(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

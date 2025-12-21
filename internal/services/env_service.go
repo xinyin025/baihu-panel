@@ -1,6 +1,9 @@
 package services
 
 import (
+	"strconv"
+	"strings"
+
 	"baihu/internal/database"
 	"baihu/internal/models"
 )
@@ -65,4 +68,33 @@ func (es *EnvService) UpdateEnvVar(id int, name, value, remark string) *models.E
 func (es *EnvService) DeleteEnvVar(id int) bool {
 	result := database.DB.Delete(&models.EnvironmentVariable{}, id)
 	return result.RowsAffected > 0
+}
+
+// GetEnvVarsByIDs 根据逗号分隔的ID字符串获取环境变量列表，返回 NAME=VALUE 格式
+func (es *EnvService) GetEnvVarsByIDs(envIDs string) []string {
+	if envIDs == "" {
+		return nil
+	}
+
+	var envVars []string
+	ids := splitEnvIDs(envIDs)
+	for _, id := range ids {
+		env := es.GetEnvVarByID(id)
+		if env != nil {
+			envVars = append(envVars, env.Name+"="+env.Value)
+		}
+	}
+	return envVars
+}
+
+// splitEnvIDs 解析逗号分隔的ID字符串
+func splitEnvIDs(envIDs string) []int {
+	var ids []int
+	for _, s := range strings.Split(envIDs, ",") {
+		s = strings.TrimSpace(s)
+		if id, err := strconv.Atoi(s); err == nil {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }

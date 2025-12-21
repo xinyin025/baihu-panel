@@ -128,6 +128,7 @@ func Setup(c *Controllers) *gin.Engine {
 			{
 				env.POST("", c.Env.CreateEnvVar)
 				env.GET("", c.Env.GetEnvVars)
+				env.GET("/all", c.Env.GetAllEnvVars)
 				env.GET("/:id", c.Env.GetEnvVar)
 				env.PUT("/:id", c.Env.UpdateEnvVar)
 				env.DELETE("/:id", c.Env.DeleteEnvVar)
@@ -171,7 +172,6 @@ func Setup(c *Controllers) *gin.Engine {
 			settings := authorized.Group("/settings")
 			{
 				settings.POST("/password", c.Settings.ChangePassword)
-				settings.POST("/cleanlogs", c.Settings.CleanLogs)
 				settings.GET("/site", c.Settings.GetSiteSettings)
 				settings.PUT("/site", c.Settings.UpdateSiteSettings)
 				settings.GET("/about", c.Settings.GetAbout)

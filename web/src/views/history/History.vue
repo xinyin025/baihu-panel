@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Pagination from '@/components/Pagination.vue'
@@ -10,12 +11,14 @@ import { toast } from 'vue-sonner'
 import pako from 'pako'
 import { useSiteSettings } from '@/composables/useSiteSettings'
 
+const route = useRoute()
 const { pageSize } = useSiteSettings()
 
 const logs = ref<TaskLog[]>([])
 const selectedLog = ref<TaskLog | null>(null)
 const logDetail = ref<LogDetail | null>(null)
 const filterKeyword = ref('')
+const filterTaskId = ref<number | undefined>(undefined)
 const currentPage = ref(1)
 const total = ref(0)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -45,9 +48,12 @@ const decompressedOutput = computed(() => {
 
 async function loadLogs() {
   try {
-    const params: { page: number; page_size: number; task_name?: string } = {
+    const params: { page: number; page_size: number; task_id?: number; task_name?: string } = {
       page: currentPage.value,
       page_size: pageSize.value
+    }
+    if (filterTaskId.value) {
+      params.task_id = filterTaskId.value
     }
     if (filterKeyword.value.trim()) {
       params.task_name = filterKeyword.value.trim()
@@ -94,7 +100,21 @@ function formatDuration(ms: number): string {
   return `${(ms / 60000).toFixed(1)}m`
 }
 
-onMounted(loadLogs)
+onMounted(() => {
+  // 从 URL 读取 task_id 参数
+  const taskIdParam = route.query.task_id
+  if (taskIdParam) {
+    filterTaskId.value = Number(taskIdParam)
+  }
+  loadLogs()
+})
+
+// 监听路由变化
+watch(() => route.query.task_id, (newTaskId) => {
+  filterTaskId.value = newTaskId ? Number(newTaskId) : undefined
+  currentPage.value = 1
+  loadLogs()
+})
 </script>
 
 <template>

@@ -20,6 +20,7 @@ type Task struct {
 	Schedule    string         `json:"schedule" gorm:"size:100"`                // cron expression
 	Timeout     int            `json:"timeout" gorm:"default:30"`               // 超时时间（分钟），默认30分钟
 	CleanConfig string         `json:"clean_config" gorm:"size:255;default:''"` // 清理配置 JSON
+	Envs        string         `json:"envs" gorm:"size:255;default:''"`         // 环境变量ID列表，逗号分隔
 	Enabled     bool           `json:"enabled" gorm:"default:true"`
 	LastRun     *LocalTime     `json:"last_run"`
 	NextRun     *LocalTime     `json:"next_run"`

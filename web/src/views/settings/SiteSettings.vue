@@ -64,7 +64,7 @@ onMounted(loadSettings)
       <Label class="text-right">站点图标</Label>
       <div class="col-span-3 flex items-center gap-2">
         <Input v-model="form.icon" placeholder="<svg>...</svg>" class="flex-1 font-mono text-xs" />
-        <div v-if="iconPreview" class="p-1.5 border rounded bg-muted/50 w-8 h-8 flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5" v-html="iconPreview" />
+        <div v-if="iconPreview" class="p-1.5 border rounded bg-white dark:bg-white w-8 h-8 flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5" v-html="iconPreview" />
       </div>
     </div>
     <div class="grid grid-cols-4 items-center gap-4">

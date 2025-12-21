@@ -81,6 +81,7 @@ export const api = {
       if (params?.name) query.set('name', params.name)
       return request<EnvListResponse>(`/env?${query}`)
     },
+    all: () => request<EnvVar[]>('/env/all'),
     create: (data: Partial<EnvVar>) => request<EnvVar>('/env', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: number, data: Partial<EnvVar>) => request<EnvVar>(`/env/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: number) => request(`/env/${id}`, { method: 'DELETE' })
@@ -109,8 +110,6 @@ export const api = {
   settings: {
     changePassword: (data: { old_password: string; new_password: string }) =>
       request('/settings/password', { method: 'POST', body: JSON.stringify(data) }),
-    cleanLogs: (days: number) =>
-      request<{ deleted: number }>('/settings/cleanlogs', { method: 'POST', body: JSON.stringify({ days }) }),
     getSite: () => request<SiteSettings>('/settings/site'),
     getPublicSite: () => request<{ title: string; subtitle: string; icon: string }>('/settings/public'),
     updateSite: (data: SiteSettings) =>
@@ -188,6 +187,7 @@ export interface Task {
   schedule: string
   timeout: number
   clean_config: string
+  envs: string
   enabled: boolean
   last_run: string
   next_run: string

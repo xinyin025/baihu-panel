@@ -13,6 +13,9 @@ data/
 # logs/
 # scripts/
 configs/config.ini
+web/dist/*
+!web/dist/.gitkeep
+
 
 # IDE
 .idea/

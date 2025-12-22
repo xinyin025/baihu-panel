@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PasswordSettings from './PasswordSettings.vue'
 import SiteSettings from './SiteSettings.vue'
+import BackupSettings from './BackupSettings.vue'
 import AboutSettings from './AboutSettings.vue'
 
 const activeTab = ref('password')
@@ -20,6 +21,7 @@ const activeTab = ref('password')
       <TabsList>
         <TabsTrigger value="password">密码修改</TabsTrigger>
         <TabsTrigger value="site">站点设置</TabsTrigger>
+        <TabsTrigger value="backup">备份恢复</TabsTrigger>
         <TabsTrigger value="about">关于</TabsTrigger>
       </TabsList>
 
@@ -43,6 +45,18 @@ const activeTab = ref('password')
           </CardHeader>
           <CardContent>
             <SiteSettings />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="backup" class="mt-6">
+        <Card class="max-w-xl">
+          <CardHeader>
+            <CardTitle>备份恢复</CardTitle>
+            <CardDescription>备份和恢复系统数据</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BackupSettings />
           </CardContent>
         </Card>
       </TabsContent>

@@ -121,6 +121,24 @@ export const api = {
       if (params?.page_size) query.set('page_size', String(params.page_size))
       if (params?.username) query.set('username', params.username)
       return request<LoginLogListResponse>(`/settings/loginlogs?${query}`)
+    },
+    createBackup: () => request('/settings/backup', { method: 'POST' }),
+    getBackupStatus: () => request<{ has_backup: boolean; backup_time: string }>('/settings/backup/status'),
+    downloadBackup: () => `${BASE_URL}/settings/backup/download`,
+    restoreBackup: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`${BASE_URL}/settings/restore`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+      const json: ApiResponse<null> = await res.json()
+      if (json.code === 401) {
+        window.location.href = '/login'
+        throw new Error('请先登录')
+      }
+      if (json.code !== 200) throw new Error(json.msg || '恢复失败')
     }
   },
   files: {

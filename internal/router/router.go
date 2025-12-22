@@ -177,6 +177,10 @@ func Setup(c *Controllers) *gin.Engine {
 				settings.PUT("/site", c.Settings.UpdateSiteSettings)
 				settings.GET("/about", c.Settings.GetAbout)
 				settings.GET("/loginlogs", c.Settings.GetLoginLogs)
+				settings.POST("/backup", c.Settings.CreateBackup)
+				settings.GET("/backup/status", c.Settings.GetBackupStatus)
+				settings.GET("/backup/download", c.Settings.DownloadBackup)
+				settings.POST("/restore", c.Settings.RestoreBackup)
 			}
 
 			// Runtime routes (依赖管理)

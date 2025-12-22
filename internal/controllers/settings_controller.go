@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"path/filepath"
 	"strconv"
 
 	"baihu/internal/constant"
@@ -20,6 +21,7 @@ type SettingsController struct {
 	userService     *services.UserService
 	settingsService *services.SettingsService
 	loginLogService *services.LoginLogService
+	backupService   *services.BackupService
 }
 
 func NewSettingsController(userService *services.UserService, loginLogService *services.LoginLogService) *SettingsController {
@@ -27,6 +29,7 @@ func NewSettingsController(userService *services.UserService, loginLogService *s
 		userService:     userService,
 		settingsService: services.NewSettingsService(),
 		loginLogService: loginLogService,
+		backupService:   services.NewBackupService(),
 	}
 }
 
@@ -174,7 +177,6 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%d秒", seconds)
 }
 
-
 // GetLoginLogs 获取登录日志
 func (sc *SettingsController) GetLoginLogs(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -200,4 +202,81 @@ func (sc *SettingsController) GetLoginLogs(c *gin.Context) {
 		"page":      page,
 		"page_size": pageSize,
 	})
+}
+
+// CreateBackup 创建备份
+func (sc *SettingsController) CreateBackup(c *gin.Context) {
+	_, err := sc.backupService.CreateBackup()
+	if err != nil {
+		utils.ServerError(c, "创建备份失败: "+err.Error())
+		return
+	}
+	utils.SuccessMsg(c, "备份创建成功")
+}
+
+// GetBackupStatus 获取备份状态
+func (sc *SettingsController) GetBackupStatus(c *gin.Context) {
+	filePath := sc.backupService.GetBackupFile()
+	var backupTime string
+	if filePath != "" {
+		if info, err := os.Stat(filePath); err == nil {
+			backupTime = info.ModTime().Format("2006-01-02 15:04:05")
+		}
+	}
+	utils.Success(c, gin.H{
+		"has_backup":  filePath != "",
+		"backup_time": backupTime,
+	})
+}
+
+// DownloadBackup 下载备份文件
+func (sc *SettingsController) DownloadBackup(c *gin.Context) {
+	filePath := sc.backupService.GetBackupFile()
+	if filePath == "" {
+		utils.NotFound(c, "没有可下载的备份")
+		return
+	}
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		sc.backupService.ClearBackup()
+		utils.NotFound(c, "备份文件不存在")
+		return
+	}
+
+	// 设置响应头
+	c.Header("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	c.Header("Content-Type", "application/zip")
+	c.File(filePath)
+
+	// 下载后清除备份记录和文件
+	go func() {
+		time.Sleep(time.Minute * 5) // 等待下载完成
+		sc.backupService.ClearBackup()
+	}()
+}
+
+// RestoreBackup 恢复备份
+func (sc *SettingsController) RestoreBackup(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		utils.BadRequest(c, "请上传备份文件")
+		return
+	}
+
+	// 保存上传的文件
+	tempPath := filepath.Join(os.TempDir(), file.Filename)
+	if err := c.SaveUploadedFile(file, tempPath); err != nil {
+		utils.ServerError(c, "保存文件失败")
+		return
+	}
+	defer os.Remove(tempPath)
+
+	// 恢复备份
+	if err := sc.backupService.Restore(tempPath); err != nil {
+		utils.ServerError(c, "恢复失败: "+err.Error())
+		return
+	}
+
+	utils.SuccessMsg(c, "恢复成功")
 }

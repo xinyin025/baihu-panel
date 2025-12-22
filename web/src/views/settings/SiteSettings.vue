@@ -37,7 +37,11 @@ async function loadSettings() {
 async function saveSettings() {
   loading.value = true
   try {
-    await api.settings.updateSite(form.value)
+    await api.settings.updateSite({
+      ...form.value,
+      page_size: String(form.value.page_size),
+      cookie_days: String(form.value.cookie_days)
+    })
     await refreshSettings()
     toast.success('保存成功')
   } catch {

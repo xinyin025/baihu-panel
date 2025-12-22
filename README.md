@@ -184,10 +184,6 @@ user = root
 password = 
 dbname = ql_panel
 table_prefix = baihu_
-
-[task]
-default_timeout = 3600
-log_retention_days = 30
 ```
 
 ### 配置项说明
@@ -198,8 +194,6 @@ log_retention_days = 30
 | `server.host` | 监听地址 | 0.0.0.0 |
 | `database.type` | 数据库类型 | sqlite |
 | `database.table_prefix` | 表前缀 | baihu_ |
-| `task.default_timeout` | 任务默认超时（秒） | 3600 |
-| `task.log_retention_days` | 日志保留天数 | 30 |
 
 ### 站点设置
 

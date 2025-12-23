@@ -48,7 +48,9 @@ RUN sed -i 's@deb.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.li
     && echo "${TZ}" > /etc/timezone \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && apt update \
-    && apt install -y tzdata git gcc curl wget vim  nodejs npm python3 python3-pip \
+    && apt install -y tzdata git gcc curl wget vim  nodejs npm python3 python3-venv python3-pip \
+    && python3 -m venv /opt/basepy3 \
+    && source /opt/basepy3/bin/activate \
     && rm -rf /var/lib/apt/lists/*  \
     && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 

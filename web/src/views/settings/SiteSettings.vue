@@ -56,24 +56,24 @@ onMounted(loadSettings)
 
 <template>
   <div class="space-y-4">
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">站点标题</Label>
-      <Input v-model="form.title" placeholder="白虎面板" class="col-span-3" />
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">站点标题</Label>
+      <Input v-model="form.title" placeholder="白虎面板" class="sm:col-span-3" />
     </div>
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">站点标语</Label>
-      <Input v-model="form.subtitle" placeholder="轻量级定时任务管理系统" class="col-span-3" />
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">站点标语</Label>
+      <Input v-model="form.subtitle" placeholder="轻量级定时任务管理系统" class="sm:col-span-3" />
     </div>
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">站点图标</Label>
-      <div class="col-span-3 flex items-center gap-2">
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">站点图标</Label>
+      <div class="sm:col-span-3 flex items-center gap-2">
         <Input v-model="form.icon" placeholder="<svg>...</svg>" class="flex-1 font-mono text-xs" />
         <div v-if="iconPreview" class="p-1.5 border rounded bg-white dark:bg-white w-8 h-8 flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5" v-html="iconPreview" />
       </div>
     </div>
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">分页/Cookie</Label>
-      <div class="col-span-3 flex items-center gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">分页/Cookie</Label>
+      <div class="sm:col-span-3 flex flex-wrap items-center gap-4">
         <div class="flex items-center gap-2">
           <Input v-model="form.page_size" type="number" class="w-20" />
           <span class="text-sm text-muted-foreground">条/页</span>

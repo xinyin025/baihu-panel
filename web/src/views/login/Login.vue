@@ -65,16 +65,16 @@ onMounted(loadSiteSettings)
       <ThemeToggle />
     </div>
     
-    <div class="border rounded-lg bg-background shadow-sm overflow-hidden">
+    <div class="border rounded-lg bg-background shadow-sm overflow-hidden w-full max-w-[400px] lg:max-w-none lg:w-auto">
       <div class="flex">
         <!-- 左侧登录表单 -->
-        <div class="w-96 p-10">
-          <div class="space-y-8">
+        <div class="w-full lg:w-96 p-6 sm:p-10">
+          <div class="space-y-6 sm:space-y-8">
             <div class="space-y-2">
-              <h1 class="text-2xl font-bold tracking-tight">{{ siteTitle }}</h1>
-              <p class="text-muted-foreground">{{ siteSubtitle }}</p>
+              <h1 class="text-xl sm:text-2xl font-bold tracking-tight">{{ siteTitle }}</h1>
+              <p class="text-muted-foreground text-sm sm:text-base">{{ siteSubtitle }}</p>
             </div>
-            <form @submit.prevent="handleLogin" class="space-y-5">
+            <form @submit.prevent="handleLogin" class="space-y-4 sm:space-y-5">
               <div class="space-y-2">
                 <Label>用户名</Label>
                 <Input v-model="username" placeholder="请输入用户名" class="h-10 text-base" />

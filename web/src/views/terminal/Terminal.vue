@@ -172,7 +172,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-[calc(100vh-100px)]">
+  <div class="flex flex-col h-[calc(100vh-120px)] sm:h-[calc(100vh-100px)]">
     <div class="flex items-center justify-between p-2 border rounded-t-md bg-[#252526]">
       <span class="text-xs font-medium text-gray-300">终端</span>
       <Button variant="ghost" size="icon" class="h-6 w-6 text-gray-400 hover:text-white" @click="reconnect" title="重新连接">

@@ -37,17 +37,17 @@ async function changePassword() {
 
 <template>
   <div class="space-y-4">
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">原密码</Label>
-      <Input v-model="oldPassword" type="password" placeholder="请输入原密码" class="col-span-3" />
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">原密码</Label>
+      <Input v-model="oldPassword" type="password" placeholder="请输入原密码" class="sm:col-span-3" />
     </div>
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">新密码</Label>
-      <Input v-model="newPassword" type="password" placeholder="请输入新密码（至少6位）" class="col-span-3" />
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">新密码</Label>
+      <Input v-model="newPassword" type="password" placeholder="请输入新密码（至少6位）" class="sm:col-span-3" />
     </div>
-    <div class="grid grid-cols-4 items-center gap-4">
-      <Label class="text-right">确认密码</Label>
-      <Input v-model="confirmPassword" type="password" placeholder="请再次输入新密码" class="col-span-3" />
+    <div class="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+      <Label class="sm:text-right">确认密码</Label>
+      <Input v-model="confirmPassword" type="password" placeholder="请再次输入新密码" class="sm:col-span-3" />
     </div>
     <div class="flex justify-end pt-2">
       <Button @click="changePassword">修改密码</Button>

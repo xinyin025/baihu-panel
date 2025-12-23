@@ -62,38 +62,38 @@ onMounted(loadLogs)
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight">登录日志</h2>
-        <p class="text-muted-foreground">查看系统登录记录</p>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight">登录日志</h2>
+        <p class="text-muted-foreground text-sm">查看系统登录记录</p>
       </div>
       <div class="flex items-center gap-2">
-        <div class="relative">
+        <div class="relative flex-1 sm:flex-none">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             v-model="filterUsername"
             placeholder="搜索用户名..."
-            class="h-9 pl-9 w-56 text-sm"
+            class="h-9 pl-9 w-full sm:w-56 text-sm"
             @input="handleSearch"
           />
         </div>
-        <Button variant="outline" size="icon" class="h-9 w-9" @click="loadLogs" :disabled="loading">
+        <Button variant="outline" size="icon" class="h-9 w-9 shrink-0" @click="loadLogs" :disabled="loading">
           <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
         </Button>
       </div>
     </div>
 
-    <div class="rounded-lg border bg-card">
+    <div class="rounded-lg border bg-card overflow-x-auto">
       <!-- 表头 -->
-      <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium">
+      <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium min-w-[500px]">
         <span class="w-24 shrink-0">用户名</span>
         <span class="w-32 shrink-0">IP 地址</span>
         <span class="w-16 shrink-0 text-center">状态</span>
-        <span class="flex-1">User Agent</span>
+        <span class="flex-1 hidden md:block">User Agent</span>
         <span class="w-40 shrink-0 text-right">时间</span>
       </div>
       <!-- 列表 -->
-      <div class="divide-y">
+      <div class="divide-y min-w-[500px]">
         <div v-if="logs.length === 0" class="text-sm text-muted-foreground text-center py-8">
           暂无登录日志
         </div>
@@ -107,7 +107,7 @@ onMounted(loadLogs)
           <span class="w-16 shrink-0 flex justify-center">
             <span :class="['h-2 w-2 rounded-full', log.status === 'success' ? 'bg-green-500' : 'bg-red-500']"></span>
           </span>
-          <span class="flex-1 text-xs text-muted-foreground truncate" :title="log.user_agent">{{ log.user_agent || '-' }}</span>
+          <span class="flex-1 text-xs text-muted-foreground truncate hidden md:block" :title="log.user_agent">{{ log.user_agent || '-' }}</span>
           <span class="w-40 shrink-0 text-right text-xs text-muted-foreground">{{ log.created_at }}</span>
         </div>
       </div>

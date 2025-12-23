@@ -210,36 +210,36 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight">定时任务</h2>
-        <p class="text-muted-foreground">管理和调度自动化任务</p>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight">定时任务</h2>
+        <p class="text-muted-foreground text-sm">管理和调度自动化任务</p>
       </div>
       <div class="flex items-center gap-2">
-        <div class="relative">
+        <div class="relative flex-1 sm:flex-none">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input v-model="filterName" placeholder="搜索任务..." class="h-9 pl-9 w-56 text-sm" @input="handleSearch" />
+          <Input v-model="filterName" placeholder="搜索任务..." class="h-9 pl-9 w-full sm:w-56 text-sm" @input="handleSearch" />
         </div>
-        <Button @click="openCreate">
-          <Plus class="h-4 w-4 mr-2" /> 新建任务
+        <Button @click="openCreate" class="shrink-0">
+          <Plus class="h-4 w-4 sm:mr-2" /> <span class="hidden sm:inline">新建任务</span>
         </Button>
       </div>
     </div>
 
-    <div class="rounded-lg border bg-card">
+    <div class="rounded-lg border bg-card overflow-x-auto">
       <!-- 表头 -->
-      <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium">
+      <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium min-w-[700px]">
         <span class="w-12 shrink-0">ID</span>
         <span class="w-40 shrink-0">名称</span>
         <span class="flex-1">命令</span>
-        <span class="w-32 shrink-0">定时规则</span>
-        <span class="w-40 shrink-0">上次执行</span>
-        <span class="w-40 shrink-0">下次执行</span>
+        <span class="w-32 shrink-0 hidden md:block">定时规则</span>
+        <span class="w-40 shrink-0 hidden lg:block">上次执行</span>
+        <span class="w-40 shrink-0 hidden lg:block">下次执行</span>
         <span class="w-12 shrink-0 text-center">状态</span>
         <span class="w-36 shrink-0 text-center">操作</span>
       </div>
       <!-- 列表 -->
-      <div class="divide-y">
+      <div class="divide-y min-w-[700px]">
         <div v-if="tasks.length === 0" class="text-sm text-muted-foreground text-center py-8">
           暂无任务
         </div>
@@ -251,9 +251,9 @@ onMounted(() => {
           <span class="w-12 shrink-0 text-muted-foreground text-sm">#{{ task.id }}</span>
           <span class="w-40 font-medium truncate shrink-0 text-sm">{{ task.name }}</span>
           <code class="flex-1 text-muted-foreground truncate text-xs bg-muted px-2 py-1 rounded">{{ task.command }}</code>
-          <code class="w-36 shrink-0 text-muted-foreground text-xs bg-muted px-2 py-1 rounded">{{ task.schedule }}</code>
-          <span class="w-40 shrink-0 text-muted-foreground text-xs">{{ task.last_run || '-' }}</span>
-          <span class="w-40 shrink-0 text-muted-foreground text-xs">{{ task.next_run || '-' }}</span>
+          <code class="w-36 shrink-0 text-muted-foreground text-xs bg-muted px-2 py-1 rounded hidden md:block">{{ task.schedule }}</code>
+          <span class="w-40 shrink-0 text-muted-foreground text-xs hidden lg:block">{{ task.last_run || '-' }}</span>
+          <span class="w-40 shrink-0 text-muted-foreground text-xs hidden lg:block">{{ task.next_run || '-' }}</span>
           <span class="w-12 flex justify-center shrink-0 cursor-pointer" @click="toggleTask(task, !task.enabled)" :title="task.enabled ? '点击禁用' : '点击启用'">
             <span :class="['w-2 h-2 rounded-full', task.enabled ? 'bg-green-500' : 'bg-gray-400']" />
           </span>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { LayoutDashboard, ListTodo, FileCode, Settings, LogOut, ScrollText, Terminal, Variable, KeyRound, Package } from 'lucide-vue-next'
+import { LayoutDashboard, ListTodo, FileCode, Settings, LogOut, ScrollText, Terminal, Variable, KeyRound, Package, Menu, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { api } from '@/api'
@@ -10,6 +10,7 @@ import { useSiteSettings } from '@/composables/useSiteSettings'
 const route = useRoute()
 const sentence = ref('欢迎使用白虎面板')
 const { siteSettings, loadSettings } = useSiteSettings()
+const mobileMenuOpen = ref(false)
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: '数据仪表', exact: true },
@@ -28,6 +29,11 @@ function isItemActive(item: (typeof navItems)[0]) {
     return route.path === item.to
   }
   return route.path.startsWith(item.to)
+}
+
+function handleNavClick(navigate: () => void) {
+  navigate()
+  mobileMenuOpen.value = false
 }
 
 async function logout() {
@@ -56,12 +62,27 @@ onMounted(() => {
 
 <template>
   <div class="flex h-screen bg-muted/40">
+    <!-- Mobile Menu Overlay -->
+    <div
+      v-if="mobileMenuOpen"
+      class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+      @click="mobileMenuOpen = false"
+    />
+
     <!-- Sidebar -->
-    <aside class="w-56 border-r bg-background flex flex-col">
-      <div class="h-14 flex items-center px-10 font-semibold text-lg border-b">
-        {{ siteSettings.title }}
+    <aside
+      :class="[
+        'fixed lg:static inset-y-0 left-0 z-50 w-56 border-r bg-background flex flex-col transform transition-transform duration-200 ease-in-out lg:transform-none',
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      ]"
+    >
+      <div class="h-14 flex items-center justify-between px-4 lg:px-10 font-semibold text-lg border-b">
+        <span>{{ siteSettings.title }}</span>
+        <Button variant="ghost" size="icon" class="h-8 w-8 lg:hidden" @click="mobileMenuOpen = false">
+          <X class="h-4 w-4" />
+        </Button>
       </div>
-      <nav class="flex-1 px-6 py-9 space-y-1">
+      <nav class="flex-1 px-3 lg:px-6 py-6 lg:py-9 space-y-1">
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
@@ -71,8 +92,8 @@ onMounted(() => {
         >
           <Button
             variant="ghost"
-            :class="['w-[80%] justify-start gap-3 h-9 px-3', isItemActive(item) && 'bg-accent text-accent-foreground']"
-            @click="navigate"
+            :class="['w-full lg:w-[80%] justify-start gap-3 h-9 px-3', isItemActive(item) && 'bg-accent text-accent-foreground']"
+            @click="handleNavClick(navigate)"
           >
             <component :is="item.icon" class="h-4 w-4" />
             {{ item.label }}
@@ -88,12 +109,17 @@ onMounted(() => {
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-auto">
-      <div class="h-14 border-b bg-background flex items-center justify-between px-6">
-        <span class="text-sm text-muted-foreground">{{ sentence }}</span>
+    <main class="flex-1 overflow-auto w-full">
+      <div class="h-14 border-b bg-background flex items-center justify-between px-4 lg:px-6">
+        <div class="flex items-center gap-3">
+          <Button variant="ghost" size="icon" class="h-8 w-8 lg:hidden" @click="mobileMenuOpen = true">
+            <Menu class="h-5 w-5" />
+          </Button>
+          <span class="text-sm text-muted-foreground hidden sm:block">{{ sentence }}</span>
+        </div>
         <ThemeToggle />
       </div>
-      <div class="p-6">
+      <div class="p-4 lg:p-6">
         <RouterView />
       </div>
     </main>

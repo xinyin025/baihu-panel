@@ -26,7 +26,7 @@ onMounted(loadAbout)
       <p class="text-sm text-muted-foreground">一个轻量级的定时任务管理系统，支持脚本管理、定时执行和日志追踪。</p>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-x-8 gap-y-5">
+    <div class="grid sm:grid-cols-2 gap-x-8 gap-y-5">
       <!-- 左侧：技术栈和功能特性 -->
       <div class="space-y-5">
         <div>

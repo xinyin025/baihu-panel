@@ -90,12 +90,12 @@ onMounted(checkBackupStatus)
 
 <template>
   <div class="space-y-4">
-    <div class="flex items-center gap-4">
-      <Button @click="createBackup" :disabled="backupLoading" variant="outline">
+    <div class="flex flex-wrap items-center gap-3">
+      <Button @click="createBackup" :disabled="backupLoading" variant="outline" class="shrink-0">
         <Archive class="w-4 h-4 mr-2" />
         {{ backupLoading ? '备份中...' : '创建备份' }}
       </Button>
-      <Button v-if="hasBackup" @click="downloadBackup" variant="outline">
+      <Button v-if="hasBackup" @click="downloadBackup" variant="outline" class="shrink-0">
         <Download class="w-4 h-4 mr-2" />
         下载备份
       </Button>

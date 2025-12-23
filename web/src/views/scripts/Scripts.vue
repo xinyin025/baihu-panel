@@ -242,9 +242,9 @@ onMounted(loadTree)
 </script>
 
 <template>
-  <div class="flex h-[calc(100vh-2rem)] gap-3">
+  <div class="flex flex-col lg:flex-row h-[calc(100vh-2rem)] gap-3">
     <!-- File Tree -->
-    <div class="w-56 flex-shrink-0 border rounded-lg bg-card flex flex-col">
+    <div class="w-full lg:w-56 flex-shrink-0 border rounded-lg bg-card flex flex-col max-h-[200px] lg:max-h-none">
       <div class="p-2 border-b flex items-center justify-between">
         <span class="text-xs font-medium">脚本文件</span>
         <div class="flex gap-0.5">
@@ -277,21 +277,21 @@ onMounted(loadTree)
     </div>
 
     <!-- Editor -->
-    <div class="flex-1 border rounded-lg bg-card flex flex-col overflow-hidden">
+    <div class="flex-1 border rounded-lg bg-card flex flex-col overflow-hidden min-h-[300px]">
       <div class="p-2 border-b flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-medium">{{ selectedFile || '未选择文件' }}</span>
-          <span v-if="hasChanges" class="text-xs text-orange-500">● 未保存</span>
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-xs font-medium truncate">{{ selectedFile || '未选择文件' }}</span>
+          <span v-if="hasChanges" class="text-xs text-orange-500 shrink-0">● 未保存</span>
         </div>
         <Button 
           v-if="selectedFile" 
           size="sm" 
-          class="h-6 text-xs gap-1" 
+          class="h-6 text-xs gap-1 shrink-0" 
           :disabled="!hasChanges || saving"
           @click="saveFile"
         >
           <Save class="h-3 w-3" />
-          {{ saving ? '保存中...' : '保存' }}
+          <span class="hidden sm:inline">{{ saving ? '保存中...' : '保存' }}</span>
         </Button>
       </div>
       

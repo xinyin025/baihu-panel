@@ -219,26 +219,26 @@ onMounted(async () => {
       <p class="text-muted-foreground">查看系统运行状态和统计数据</p>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+    <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
       <Card v-for="item in statItems" :key="item.key" class="cursor-pointer hover:bg-accent/50 transition-colors" @click="navigateTo(item.route)">
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{ item.label }}</CardTitle>
+          <CardTitle class="text-xs sm:text-sm font-medium">{{ item.label }}</CardTitle>
           <component :is="item.icon" class="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div class="text-2xl font-bold">{{ stats[item.key as keyof Stats] }}</div>
+          <div class="text-xl sm:text-2xl font-bold">{{ stats[item.key as keyof Stats] }}</div>
         </CardContent>
       </Card>
     </div>
 
     <div class="grid gap-4 lg:grid-cols-10">
-      <Card class="lg:col-span-7 h-[340px]">
+      <Card class="lg:col-span-7 h-[300px] sm:h-[340px]">
         <CardHeader class="pb-2">
-          <CardTitle>执行统计</CardTitle>
-          <CardDescription>最近30天任务执行情况</CardDescription>
+          <CardTitle class="text-base sm:text-lg">执行统计</CardTitle>
+          <CardDescription class="text-xs sm:text-sm">最近30天任务执行情况</CardDescription>
         </CardHeader>
         <CardContent>
-          <div id="stats-chart" class="w-full h-[240px]">
+          <div id="stats-chart" class="w-full h-[200px] sm:h-[240px]">
             <div v-if="!chartsLoaded" class="h-full flex items-center justify-center text-muted-foreground text-sm">
               加载中...
             </div>
@@ -246,13 +246,13 @@ onMounted(async () => {
         </CardContent>
       </Card>
 
-      <Card class="lg:col-span-3 h-[340px]">
+      <Card class="lg:col-span-3 h-[300px] sm:h-[340px]">
         <CardHeader class="pb-2">
-          <CardTitle>任务占比</CardTitle>
-          <CardDescription>最近30天任务执行分布</CardDescription>
+          <CardTitle class="text-base sm:text-lg">任务占比</CardTitle>
+          <CardDescription class="text-xs sm:text-sm">最近30天任务执行分布</CardDescription>
         </CardHeader>
         <CardContent>
-          <div id="pie-chart" class="w-full h-[240px]">
+          <div id="pie-chart" class="w-full h-[200px] sm:h-[240px]">
             <div v-if="!chartsLoaded" class="h-full flex items-center justify-center text-muted-foreground text-sm">
               加载中...
             </div>

@@ -103,32 +103,32 @@ onMounted(loadEnvVars)
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight">环境变量</h2>
-        <p class="text-muted-foreground">管理脚本执行时的环境变量</p>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight">环境变量</h2>
+        <p class="text-muted-foreground text-sm">管理脚本执行时的环境变量</p>
       </div>
       <div class="flex items-center gap-2">
-        <div class="relative">
+        <div class="relative flex-1 sm:flex-none">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input v-model="filterName" placeholder="搜索变量..." class="h-9 pl-9 w-56 text-sm" @input="handleSearch" />
+          <Input v-model="filterName" placeholder="搜索变量..." class="h-9 pl-9 w-full sm:w-56 text-sm" @input="handleSearch" />
         </div>
-        <Button @click="openCreate">
-          <Plus class="h-4 w-4 mr-2" /> 新建变量
+        <Button @click="openCreate" class="shrink-0">
+          <Plus class="h-4 w-4 sm:mr-2" /> <span class="hidden sm:inline">新建变量</span>
         </Button>
       </div>
     </div>
 
-    <div class="rounded-lg border bg-card">
+    <div class="rounded-lg border bg-card overflow-x-auto">
       <!-- 表头 -->
-      <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium">
+      <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium min-w-[500px]">
         <span class="w-48 shrink-0">变量名</span>
         <span class="flex-1">值</span>
-        <span class="w-48 shrink-0">备注</span>
+        <span class="w-48 shrink-0 hidden md:block">备注</span>
         <span class="w-24 shrink-0 text-center">操作</span>
       </div>
       <!-- 列表 -->
-      <div class="divide-y">
+      <div class="divide-y min-w-[500px]">
         <div v-if="envVars.length === 0" class="text-sm text-muted-foreground text-center py-8">
           暂无环境变量
         </div>
@@ -141,7 +141,7 @@ onMounted(loadEnvVars)
           <span class="flex-1 font-mono text-muted-foreground truncate text-xs">
             {{ showValues[env.id] ? env.value : maskValue(env.value) }}
           </span>
-          <span class="w-48 shrink-0 text-muted-foreground truncate text-sm">{{ env.remark || '-' }}</span>
+          <span class="w-48 shrink-0 text-muted-foreground truncate text-sm hidden md:block">{{ env.remark || '-' }}</span>
           <span class="w-24 shrink-0 flex justify-center gap-1">
             <Button variant="ghost" size="icon" class="h-7 w-7" @click="toggleShow(env.id)" :title="showValues[env.id] ? '隐藏' : '显示'">
               <Eye v-if="!showValues[env.id]" class="h-3.5 w-3.5" />

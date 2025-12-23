@@ -119,33 +119,33 @@ watch(() => route.query.task_id, (newTaskId) => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight">执行历史</h2>
-        <p class="text-muted-foreground">查看任务执行记录和日志</p>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight">执行历史</h2>
+        <p class="text-muted-foreground text-sm">查看任务执行记录和日志</p>
       </div>
       <div class="flex items-center gap-2">
-        <div class="relative">
+        <div class="relative flex-1 sm:flex-none">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input v-model="filterKeyword" placeholder="搜索任务..." class="h-9 pl-9 w-56 text-sm" @input="handleSearch" />
+          <Input v-model="filterKeyword" placeholder="搜索任务..." class="h-9 pl-9 w-full sm:w-56 text-sm" @input="handleSearch" />
         </div>
-        <Button variant="outline" size="icon" class="h-9 w-9" @click="loadLogs">
+        <Button variant="outline" size="icon" class="h-9 w-9 shrink-0" @click="loadLogs">
           <RefreshCw class="h-4 w-4" />
         </Button>
       </div>
     </div>
 
-    <div class="flex gap-4">
+    <div class="flex flex-col lg:flex-row gap-4">
       <!-- 日志列表 -->
       <div class="flex-1 min-w-0 rounded-lg border bg-card overflow-hidden">
         <!-- 表头 -->
-        <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium">
+        <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium overflow-x-auto">
           <span class="w-12 shrink-0">ID</span>
           <span class="w-32 shrink-0">任务名称</span>
-          <span :class="selectedLog ? 'w-40 shrink-0' : 'flex-1'">命令</span>
+          <span :class="selectedLog ? 'w-40 shrink-0 hidden sm:block' : 'flex-1'">命令</span>
           <span class="w-12 shrink-0 text-center">状态</span>
           <span class="w-20 text-right shrink-0">耗时</span>
-          <span v-if="!selectedLog" class="w-40 text-right shrink-0">执行时间</span>
+          <span v-if="!selectedLog" class="w-40 text-right shrink-0 hidden md:block">执行时间</span>
         </div>
         <!-- 列表 -->
         <div class="divide-y">
@@ -163,12 +163,12 @@ watch(() => route.query.task_id, (newTaskId) => {
           >
             <span class="w-12 shrink-0 text-muted-foreground text-sm">#{{ log.id }}</span>
             <span class="w-32 font-medium truncate shrink-0 text-sm">{{ log.task_name }}</span>
-            <code :class="['text-muted-foreground truncate text-xs bg-muted px-2 py-1 rounded', selectedLog ? 'w-40 shrink-0' : 'flex-1']">{{ log.command }}</code>
+            <code :class="['text-muted-foreground truncate text-xs bg-muted px-2 py-1 rounded', selectedLog ? 'w-40 shrink-0 hidden sm:block' : 'flex-1']">{{ log.command }}</code>
             <span class="w-12 flex justify-center shrink-0">
               <span :class="['w-2 h-2 rounded-full', log.status === 'success' ? 'bg-green-500' : log.status === 'failed' ? 'bg-red-500' : 'bg-yellow-500']" />
             </span>
             <span class="w-20 text-right shrink-0 text-muted-foreground text-xs">{{ formatDuration(log.duration) }}</span>
-            <span v-if="!selectedLog" class="w-40 text-right shrink-0 text-muted-foreground text-xs">{{ log.created_at }}</span>
+            <span v-if="!selectedLog" class="w-40 text-right shrink-0 text-muted-foreground text-xs hidden md:block">{{ log.created_at }}</span>
           </div>
         </div>
         <!-- 分页 -->
@@ -178,7 +178,7 @@ watch(() => route.query.task_id, (newTaskId) => {
       <!-- 日志详情侧边栏 -->
       <div
         v-if="selectedLog"
-        class="w-[480px] rounded-lg border bg-card flex flex-col overflow-hidden shrink-0 max-h-[calc(100vh-180px)]"
+        class="w-full lg:w-[480px] rounded-lg border bg-card flex flex-col overflow-hidden shrink-0 max-h-[60vh] lg:max-h-[calc(100vh-180px)]"
       >
         <div class="flex items-center justify-between px-4 py-3 border-b">
           <span class="text-sm font-medium">日志详情</span>

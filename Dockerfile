@@ -59,7 +59,7 @@ RUN sed -i 's@deb.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.li
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-         tzdata git gcc curl wget vim nodejs npm python3 python3-venv python3-pip \
+         tzdata git gcc curl wget vim nodejs htop npm python3 python3-venv python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

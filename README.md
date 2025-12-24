@@ -1,82 +1,27 @@
-# 白虎面板 (Baihu Panel)
+# 白虎面板 🐯
 
-<p align="center">
-  <strong>轻量级定时任务管理系统</strong>
-</p>
+白虎面板是一个轻量级定时任务管理系统，基于 Go + Vue 3 构建，单文件部署，开箱即用。
 
-<p align="center">
-  基于 Go + Vue 3 构建，单文件部署，开箱即用
-</p>
+项目名叫白虎，取自中国传统四象之一，寓意守护和力量。
 
-<p align="center">
-  <a href="#功能特性">功能特性</a> •
-  <a href="#快速开始">快速开始</a> •
-  <a href="#配置说明">配置说明</a> •
-  <a href="#开发指南">开发指南</a>
-</p>
+如果你需要管理多个定时任务、脚本文件，并希望有一个简洁的 Web 界面来操作，这个项目可以帮你轻松实现。支持 Cron 表达式调度、在线终端、脚本编辑、环境变量管理等功能。
 
----
+## 特色 ✨
 
-## ✨ 功能特性
+- 🔄 **轻量级：** 单文件部署，无需复杂配置，开箱即用
+- 📋 **任务调度：** 支持标准 Cron 表达式，常用时间规则快捷选择
+- 📝 **脚本管理：** 在线代码编辑器，支持文件上传、压缩包解压
+- 🖥️ **在线终端：** WebSocket 实时终端，命令执行结果实时输出
+- 🔐 **环境变量：** 安全存储敏感配置，任务执行时自动注入
+- 🎨 **现代 UI：** 响应式设计，深色/浅色主题切换
 
-### 📋 定时任务管理
-- 支持标准 Cron 表达式调度
-- 常用时间规则快捷选择
-- 任务启用/禁用状态切换
-- 手动触发执行
-- 任务超时控制
+## 效果图 📺
 
-### 📝 脚本文件管理
-- 在线代码编辑器
-- 文件树形结构展示
-- 支持创建、重命名、删除文件/文件夹
-- 支持压缩包上传解压
-- 支持多文件批量上传
+<!-- TODO: 添加效果图 -->
 
-### 🖥️ 在线终端
-- WebSocket 实时终端
-- 支持常用 Shell 命令
-- 命令执行结果实时输出
+## 快速开始 🚀
 
-### 📊 执行日志
-- 任务执行历史记录
-- 执行状态追踪（成功/失败/超时）
-- 执行耗时统计
-- 日志内容压缩存储
-- 支持按任务名称搜索
-- 日志自动清理
-
-### 🔐 环境变量
-- 安全存储敏感配置
-- 变量值脱敏显示
-- 任务执行时自动注入
-
-### ⚙️ 系统设置
-- 站点标题、标语自定义
-- 站点图标自定义（SVG）
-- 分页大小配置
-- Cookie 有效期配置
-- 密码修改
-- 系统信息查看
-
-### 🎨 界面特性
-- 响应式设计
-- 深色/浅色主题切换
-- 现代化 UI 组件
-
-### 🔒 安全特性
-- JWT Token 认证
-- 密码加盐哈希存储
-- 启动时自动生成随机密钥
-- Cookie HttpOnly 保护
-
----
-
-## 🚀 快速开始
-
-### 方式一：Docker 部署（推荐）
-
-**使用预构建镜像：**
+### Docker 部署（推荐）
 
 ```bash
 docker run -d \
@@ -84,14 +29,13 @@ docker run -d \
   -p 8052:8052 \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/configs:/app/configs \
+  -v $(pwd)/envs:/app/envs \
   -e TZ=Asia/Shanghai \
   --restart unless-stopped \
   ghcr.io/engigu/baihu:main
 ```
 
-**使用 Docker Compose：**
-
-创建 `docker-compose.yml`：
+### Docker Compose
 
 ```yaml
 version: '3.8'
@@ -105,55 +49,64 @@ services:
     volumes:
       - ./data:/app/data
       - ./configs:/app/configs
+      - ./envs:/app/envs
     environment:
       - TZ=Asia/Shanghai
     restart: unless-stopped
 ```
 
-启动服务：
-
 ```bash
 docker-compose up -d
-```
-
-### 方式二：本地构建运行
-
-**环境要求：**
-- Go 1.21+
-- Node.js 18+
-- Make
-
-**构建步骤：**
-
-```bash
-# 克隆项目
-git clone https://github.com/engigu/baihu.git
-cd baihu
-
-# 安装依赖
-make deps
-cd web && npm install && cd ..
-
-# 构建前端 + 后端
-make build-all
-
-# 运行
-./baihu
 ```
 
 ### 访问面板
 
 启动后访问：http://localhost:8052
 
-**默认账号：**
-- 用户名：`admin`
-- 密码：`123456`
+**默认账号：** `admin` / `123456`
 
-> ⚠️ **安全提示**：首次登录后请立即修改默认密码
+> ⚠️ 首次登录后请立即修改默认密码
 
----
+## 功能特性 📋
 
-## 📁 目录结构
+### 定时任务管理
+- 支持标准 Cron 表达式调度
+- 常用时间规则快捷选择
+- 任务启用/禁用状态切换
+- 手动触发执行
+- 任务超时控制
+
+### 脚本文件管理
+- 在线代码编辑器
+- 文件树形结构展示
+- 支持创建、重命名、删除文件/文件夹
+- 支持压缩包上传解压
+- 支持多文件批量上传
+
+### 在线终端
+- WebSocket 实时终端
+- 支持常用 Shell 命令
+- 命令执行结果实时输出
+
+### 执行日志
+- 任务执行历史记录
+- 执行状态追踪（成功/失败/超时）
+- 执行耗时统计
+- 日志内容压缩存储
+- 日志自动清理
+
+### 环境变量
+- 安全存储敏感配置
+- 变量值脱敏显示
+- 任务执行时自动注入
+
+### 系统设置
+- 站点标题、标语、图标自定义
+- 分页大小、Cookie 有效期配置
+- 调度参数热重载
+- 数据备份与恢复
+
+## 目录结构 📁
 
 ```
 ./
@@ -161,13 +114,26 @@ make build-all
 ├── data/                 # 数据目录（自动创建）
 │   ├── ql.db             # SQLite 数据库
 │   └── scripts/          # 脚本文件存储
-└── configs/
-    └── config.ini        # 配置文件（自动创建）
+├── configs/
+│   └── config.ini        # 配置文件（自动创建）
+└── envs/                 # 运行环境目录（自动创建）
+    ├── python/           # Python 虚拟环境
+    └── node/             # Node.js npm 全局安装目录
 ```
 
----
+### Docker 启动流程
 
-## ⚙️ 配置说明
+容器启动时 `docker-entrypoint.sh` 会执行以下操作：
+
+1. **创建必要目录**：`/app/data`、`/app/data/scripts`、`/app/configs`、`/app/envs`
+2. **初始化 Python 虚拟环境**：如果 `/app/envs/python` 不存在，自动创建并配置清华 pip 镜像源
+3. **配置 Node.js 环境**：设置 npm prefix 到 `/app/envs/node`，配置 npmmirror 镜像源
+4. **激活环境**：将 `/app/envs/python/bin` 和 `/app/envs/node/bin` 加入 PATH
+5. **启动应用**
+
+> 💡 通过挂载 `./envs:/app/envs` 可以持久化 Python 和 Node.js 环境，避免每次重启容器都重新安装依赖。
+
+## 配置说明 ⚙️
 
 配置文件路径：`configs/config.ini`
 
@@ -186,8 +152,6 @@ dbname = ql_panel
 table_prefix = baihu_
 ```
 
-### 配置项说明
-
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
 | `server.port` | 服务端口 | 8052 |
@@ -195,191 +159,48 @@ table_prefix = baihu_
 | `database.type` | 数据库类型 | sqlite |
 | `database.table_prefix` | 表前缀 | baihu_ |
 
-### 站点设置
-
-以下设置可在管理面板「系统设置 > 站点设置」中配置：
-
-| 设置项 | 说明 | 默认值 |
-|--------|------|--------|
-| 站点标题 | 显示在浏览器标签和侧边栏 | 白虎面板 |
-| 站点标语 | 显示在登录页 | 轻量级定时任务管理系统 |
-| 站点图标 | SVG 格式，用于 favicon 和登录页 | 内置图标 |
-| 分页大小 | 列表每页显示条数 | 10 |
-| Cookie 有效期 | 登录状态保持天数 | 7 |
-
 ### 调度设置
 
-以下设置可在管理面板「系统设置 > 调度设置」中配置，用于优化任务执行性能：
+系统采用 Worker Pool + 任务队列的架构来控制任务执行，可在「系统设置 > 调度设置」中配置：
 
 | 设置项 | 说明 | 默认值 |
 |--------|------|--------|
 | Worker 数量 | 并发执行任务的 worker 数量 | 4 |
 | 队列大小 | 任务队列缓冲区大小 | 100 |
-| 速率间隔 | 任务启动间隔（毫秒），200ms = 每秒最多 5 个任务 | 200 |
+| 速率间隔 | 任务启动间隔（毫秒） | 200 |
 
-**调度机制说明：**
+修改调度设置后立即生效，无需重启服务。
 
-系统采用 Worker Pool + 任务队列的架构来控制任务执行：
+## 技术栈 🛠️
 
-1. **Worker Pool**：固定数量的 worker 从队列中取任务执行，避免 cron 触发时无限并发
-2. **任务队列**：cron 调度器触发的任务先入队，由 worker 按顺序执行
-3. **速率限制**：控制任务启动频率，防止秒级 cron 同时触发多个进程导致 CPU 峰值
-4. **热重载**：修改调度设置后立即生效，无需重启服务
+**后端：** Go 1.21+ / Gin / GORM / SQLite / JWT / Cron / WebSocket
 
----
+**前端：** Vue 3 / TypeScript / Vite / Tailwind CSS / Shadcn/ui / Xterm.js
 
-## 🛠️ 技术栈
+**部署：** Docker / GitHub Actions / Multi-arch (amd64/arm64)
 
-### 后端
-- **Go 1.21+** - 编程语言
-- **Gin** - Web 框架
-- **GORM** - ORM 框架
-- **SQLite** - 嵌入式数据库
-- **JWT** - 身份认证
-- **Cron** - 定时任务调度
-- **WebSocket** - 实时通信
-
-### 前端
-- **Vue 3** - 前端框架
-- **TypeScript** - 类型安全
-- **Vite** - 构建工具
-- **Tailwind CSS** - 样式框架
-- **Shadcn/ui** - UI 组件库
-- **Xterm.js** - 终端模拟器
-
-### 部署
-- **Docker** - 容器化部署
-- **GitHub Actions** - CI/CD
-- **Multi-arch** - 支持 amd64/arm64
-
----
-
-## 📖 开发指南
-
-### 项目结构
-
-```
-├── main.go                    # 入口文件
-├── internal/
-│   ├── bootstrap/             # 应用启动
-│   ├── constant/              # 常量定义
-│   ├── controllers/           # 控制器层
-│   ├── database/              # 数据库初始化
-│   ├── middleware/            # 中间件
-│   ├── models/                # 数据模型
-│   ├── router/                # 路由注册
-│   ├── services/              # 业务逻辑层
-│   ├── static/                # 静态文件嵌入
-│   └── utils/                 # 工具函数
-├── web/                       # 前端项目
-│   ├── src/
-│   │   ├── api/               # API 接口
-│   │   ├── components/        # 公共组件
-│   │   ├── composables/       # 组合式函数
-│   │   ├── layouts/           # 布局组件
-│   │   ├── router/            # 路由配置
-│   │   └── views/             # 页面视图
-│   └── ...
-├── configs/                   # 配置文件
-├── data/                      # 数据目录
-├── Dockerfile                 # Docker 构建
-├── Makefile                   # 构建脚本
-└── README.md
-```
-
-### 开发命令
+## 本地开发 📖
 
 ```bash
-# 安装 Go 依赖
+# 克隆项目
+git clone https://github.com/engigu/baihu.git
+cd baihu
+
+# 安装依赖
 make deps
+cd web && npm install && cd ..
 
-# 安装前端依赖
-cd web && npm install
-
-# 前端开发模式（热重载）
-cd web && npm run dev
-
-# 构建前端
-make build-web
-
-# 构建后端
-make build
-
-# 构建全部（前端 + 后端）
+# 构建前端 + 后端
 make build-all
 
-# 清理构建产物
-make clean
-
-# Docker 构建
-make docker-build
-
-# Docker Compose 启动
-make docker-up
-
-# Docker Compose 停止
-make docker-down
+# 运行
+./baihu
 ```
 
-### API 接口
-
-#### 认证相关
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/auth/login` | 用户登录 |
-| POST | `/api/auth/logout` | 用户登出 |
-| GET | `/api/auth/me` | 获取当前用户 |
-
-#### 任务管理
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/tasks` | 获取任务列表 |
-| POST | `/api/tasks` | 创建任务 |
-| GET | `/api/tasks/:id` | 获取任务详情 |
-| PUT | `/api/tasks/:id` | 更新任务 |
-| DELETE | `/api/tasks/:id` | 删除任务 |
-| POST | `/api/execute/task/:id` | 执行任务 |
-
-#### 环境变量
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/env` | 获取变量列表 |
-| POST | `/api/env` | 创建变量 |
-| PUT | `/api/env/:id` | 更新变量 |
-| DELETE | `/api/env/:id` | 删除变量 |
-
-#### 脚本文件
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/files/tree` | 获取文件树 |
-| GET | `/api/files/content` | 获取文件内容 |
-| POST | `/api/files/content` | 保存文件内容 |
-| POST | `/api/files/create` | 创建文件/文件夹 |
-| POST | `/api/files/delete` | 删除文件/文件夹 |
-| POST | `/api/files/upload` | 上传压缩包 |
-
-#### 执行日志
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/logs` | 获取日志列表 |
-| GET | `/api/logs/:id` | 获取日志详情 |
-
-#### 系统设置
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/settings/site` | 获取站点设置 |
-| PUT | `/api/settings/site` | 更新站点设置 |
-| POST | `/api/settings/password` | 修改密码 |
-| GET | `/api/settings/about` | 获取系统信息 |
-
----
-
-## 🤝 贡献
+## 贡献 🤝
 
 欢迎提交 Issue 和 Pull Request！
 
----
-
-## 📄 License
+## 许可证 📄
 
 [MIT License](LICENSE)

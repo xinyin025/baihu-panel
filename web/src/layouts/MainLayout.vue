@@ -74,17 +74,17 @@ onMounted(() => {
     <!-- Sidebar -->
     <aside
       :class="[
-        'fixed lg:static inset-y-0 left-0 z-50 w-56 border-r bg-background flex flex-col transform transition-transform duration-200 ease-in-out lg:transform-none',
+        'fixed lg:static inset-y-0 left-0 z-50 w-44 border-r bg-background flex flex-col transform transition-transform duration-200 ease-in-out lg:transform-none',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       ]"
     >
-      <div class="h-14 flex items-center justify-between px-4 lg:px-10 font-semibold text-lg border-b">
+      <div class="h-14 flex items-center justify-center px-4 font-semibold text-lg border-b relative">
         <span>{{ siteSettings.title }}</span>
-        <Button variant="ghost" size="icon" class="h-8 w-8 lg:hidden" @click="mobileMenuOpen = false">
+        <Button variant="ghost" size="icon" class="h-8 w-8 lg:hidden absolute right-2" @click="mobileMenuOpen = false">
           <X class="h-4 w-4" />
         </Button>
       </div>
-      <nav class="flex-1 px-3 lg:px-6 py-6 lg:py-9 space-y-1">
+      <nav class="flex-1 px-3 py-6 space-y-1 flex flex-col items-center">
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
@@ -94,7 +94,7 @@ onMounted(() => {
         >
           <Button
             variant="ghost"
-            :class="['w-full lg:w-[80%] justify-start gap-3 h-9 px-3', isItemActive(item) && 'bg-accent text-accent-foreground']"
+            :class="['justify-start gap-3 h-9 px-3', isItemActive(item) && 'bg-accent text-accent-foreground']"
             @click="handleNavClick(navigate)"
           >
             <component :is="item.icon" class="h-4 w-4" />
@@ -102,8 +102,8 @@ onMounted(() => {
           </Button>
         </RouterLink>
       </nav>
-      <div class="px-3 py-4 border-t">
-        <Button variant="ghost" class="w-full justify-start gap-3 h-9 px-3 text-muted-foreground hover:text-foreground" @click="logout">
+      <div class="px-3 py-4 border-t flex justify-center">
+        <Button variant="ghost" class="justify-start gap-3 h-9 px-3 text-muted-foreground hover:text-foreground" @click="logout">
           <LogOut class="h-4 w-4" />
           退出登录
         </Button>

@@ -18,7 +18,7 @@ const activeTab = ref('password')
       <p class="text-muted-foreground text-sm">管理系统配置和账户安全</p>
     </div>
 
-    <Tabs v-model="activeTab" class="w-full">
+    <Tabs v-model="activeTab" class="max-w-2xl">
       <TabsList class="w-full sm:w-auto grid grid-cols-5 sm:inline-flex h-auto gap-1 p-1">
         <TabsTrigger value="password" class="text-xs px-2 sm:px-3 py-1.5">密码修改</TabsTrigger>
         <TabsTrigger value="site" class="text-xs px-2 sm:px-3 py-1.5">站点设置</TabsTrigger>
@@ -28,7 +28,7 @@ const activeTab = ref('password')
       </TabsList>
 
       <TabsContent value="password" class="mt-6">
-        <Card class="max-w-lg">
+        <Card>
           <CardHeader>
             <CardTitle>修改密码</CardTitle>
             <CardDescription>更新您的账户密码</CardDescription>
@@ -40,7 +40,7 @@ const activeTab = ref('password')
       </TabsContent>
 
       <TabsContent value="site" class="mt-6">
-        <Card class="max-w-xl">
+        <Card>
           <CardHeader>
             <CardTitle>站点设置</CardTitle>
             <CardDescription>配置站点标题、图标和系统参数</CardDescription>
@@ -52,7 +52,7 @@ const activeTab = ref('password')
       </TabsContent>
 
       <TabsContent value="scheduler" class="mt-6">
-        <Card class="max-w-xl">
+        <Card>
           <CardHeader>
             <CardTitle>调度设置</CardTitle>
             <CardDescription>配置任务调度器参数</CardDescription>
@@ -64,7 +64,7 @@ const activeTab = ref('password')
       </TabsContent>
 
       <TabsContent value="backup" class="mt-6">
-        <Card class="max-w-xl">
+        <Card>
           <CardHeader>
             <CardTitle>备份恢复</CardTitle>
             <CardDescription>备份和恢复系统数据</CardDescription>
@@ -76,7 +76,7 @@ const activeTab = ref('password')
       </TabsContent>
 
       <TabsContent value="about" class="mt-6">
-        <Card class="max-w-xl">
+        <Card>
           <CardContent class="pt-6">
             <AboutSettings />
           </CardContent>

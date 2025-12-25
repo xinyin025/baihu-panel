@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -296,6 +297,30 @@ func (es *ExecutorService) executeTaskInternal(taskID int) *ExecutionResult {
 	es.runningTasks[taskID] = true
 	es.mu.Unlock()
 
+	var result *ExecutionResult
+
+	// 根据任务类型执行不同逻辑
+	if task.Type == "repo" {
+		result = es.executeRepoTask(task)
+	} else {
+		result = es.executeNormalTask(task)
+	}
+
+	result.TaskID = taskID
+
+	// 标记任务结束
+	es.mu.Lock()
+	delete(es.runningTasks, taskID)
+	es.mu.Unlock()
+
+	// 异步执行回调（日志压缩、统计更新、日志清理）
+	es.executeCallbacksAsync(uint(taskID), task.Command, result)
+
+	return result
+}
+
+// executeNormalTask 执行普通任务
+func (es *ExecutorService) executeNormalTask(task *models.Task) *ExecutionResult {
 	// 加载环境变量
 	envService := NewEnvService()
 	envVars := envService.GetEnvVarsByIDs(task.Envs)
@@ -311,16 +336,76 @@ func (es *ExecutorService) executeTaskInternal(taskID int) *ExecutionResult {
 	if timeout <= 0 {
 		timeout = constant.DefaultTaskTimeout
 	}
-	result := es.ExecuteCommandWithOptions(task.Command, time.Duration(timeout)*time.Minute, envVars, workDir)
-	result.TaskID = taskID
+	return es.ExecuteCommandWithOptions(task.Command, time.Duration(timeout)*time.Minute, envVars, workDir)
+}
 
-	// 标记任务结束
-	es.mu.Lock()
-	delete(es.runningTasks, taskID)
-	es.mu.Unlock()
+// executeRepoTask 执行仓库同步任务（调用 sync.py）
+func (es *ExecutorService) executeRepoTask(task *models.Task) *ExecutionResult {
+	result := &ExecutionResult{
+		Success: false,
+		Start:   time.Now(),
+	}
 
-	// 异步执行回调（日志压缩、统计更新、日志清理）
-	es.executeCallbacksAsync(uint(taskID), task.Command, result)
+	// 解析仓库配置
+	var config models.RepoConfig
+	if err := json.Unmarshal([]byte(task.Config), &config); err != nil {
+		result.End = time.Now()
+		result.Error = "解析仓库配置失败: " + err.Error()
+		return result
+	}
+
+	// 构建 sync.py 命令参数
+	args := []string{
+		"/opt/sync.py",
+		"--source-type", config.SourceType,
+		"--source-url", config.SourceURL,
+		"--target-path", config.TargetPath,
+	}
+
+	// Git 分支
+	if config.Branch != "" {
+		args = append(args, "--branch", config.Branch)
+	}
+
+	// 稀疏路径
+	if config.SparsePath != "" {
+		args = append(args, "--path", config.SparsePath)
+	}
+
+	// 单文件模式
+	if config.SingleFile {
+		args = append(args, "--single-file")
+	}
+
+	// 代理设置
+	if config.Proxy != "" && config.Proxy != "none" {
+		args = append(args, "--proxy", config.Proxy)
+		if config.Proxy == "custom" && config.ProxyURL != "" {
+			args = append(args, "--proxy-url", config.ProxyURL)
+		}
+	}
+
+	// 认证 Token
+	if config.AuthToken != "" {
+		args = append(args, "--auth-token", config.AuthToken)
+	}
+
+	// 构建命令
+	command := "python3 " + strings.Join(args, " ")
+
+	// 使用任务配置的超时时间
+	timeout := task.Timeout
+	if timeout <= 0 {
+		timeout = constant.DefaultTaskTimeout
+	}
+
+	// 执行命令
+	execResult := es.ExecuteCommandWithOptions(command, time.Duration(timeout)*time.Minute, nil, "/opt")
+
+	result.End = time.Now()
+	result.Output = execResult.Output
+	result.Success = execResult.Success
+	result.Error = execResult.Error
 
 	return result
 }

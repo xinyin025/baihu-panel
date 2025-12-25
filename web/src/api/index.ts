@@ -220,6 +220,8 @@ export interface Task {
   id: number
   name: string
   command: string
+  type: string
+  config: string
   schedule: string
   timeout: number
   work_dir: string
@@ -228,6 +230,18 @@ export interface Task {
   enabled: boolean
   last_run: string
   next_run: string
+}
+
+export interface RepoConfig {
+  source_type: string
+  source_url: string
+  target_path: string
+  branch: string
+  sparse_path: string
+  single_file: boolean
+  proxy: string
+  proxy_url: string
+  auth_token: string
 }
 
 export interface TaskListResponse {

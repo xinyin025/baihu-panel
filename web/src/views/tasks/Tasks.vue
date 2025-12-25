@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import Pagination from '@/components/Pagination.vue'
 import DirTreeSelect from '@/components/DirTreeSelect.vue'
-import { Plus, Play, Pencil, Trash2, Search, ScrollText, ChevronDown, X } from 'lucide-vue-next'
-import { api, type Task, type EnvVar } from '@/api'
+import { Plus, Play, Pencil, Trash2, Search, ScrollText, ChevronDown, X, GitBranch } from 'lucide-vue-next'
+import { api, type Task, type EnvVar, type RepoConfig } from '@/api'
 import { toast } from 'vue-sonner'
 import { useSiteSettings } from '@/composables/useSiteSettings'
 import { useRouter } from 'vue-router'
@@ -22,6 +23,7 @@ const { pageSize } = useSiteSettings()
 
 const tasks = ref<Task[]>([])
 const showDialog = ref(false)
+const showRepoDialog = ref(false)
 const editingTask = ref<Partial<Task>>({})
 const isEdit = ref(false)
 const showDeleteDialog = ref(false)
@@ -30,6 +32,19 @@ const deleteTaskId = ref<number | null>(null)
 // 清理配置
 const cleanType = ref('')
 const cleanKeep = ref(30)
+
+// 仓库同步配置
+const repoConfig = ref<RepoConfig>({
+  source_type: 'git',
+  source_url: '',
+  target_path: '',
+  branch: '',
+  sparse_path: '',
+  single_file: false,
+  proxy: 'none',
+  proxy_url: '',
+  auth_token: ''
+})
 
 // 环境变量
 const allEnvVars = ref<EnvVar[]>([])
@@ -51,6 +66,13 @@ const cronPresets = [
   { label: '每天8点', value: '0 0 8 * * *' },
   { label: '每周一', value: '0 0 0 * * 1' },
   { label: '每月1号', value: '0 0 0 1 * *' },
+]
+
+const proxyOptions = [
+  { label: '不使用代理', value: 'none' },
+  { label: 'ghproxy.com', value: 'ghproxy' },
+  { label: 'mirror.ghproxy.com', value: 'mirror' },
+  { label: '自定义代理', value: 'custom' },
 ]
 
 // 计算清理配置 JSON
@@ -120,13 +142,22 @@ function handlePageChange(page: number) {
 }
 
 function openCreate() {
-  editingTask.value = { name: '', command: '', schedule: '0 * * * * *', timeout: 30, work_dir: '', enabled: true, clean_config: '', envs: '' }
+  editingTask.value = { name: '', command: '', type: 'task', schedule: '0 * * * * *', timeout: 30, work_dir: '', enabled: true, clean_config: '', envs: '' }
   cleanType.value = 'none'
   cleanKeep.value = 30
   selectedEnvIds.value = []
   envSearchQuery.value = ''
   isEdit.value = false
   showDialog.value = true
+}
+
+function openCreateRepo() {
+  editingTask.value = { name: '', type: 'repo', schedule: '0 0 0 * * *', timeout: 30, enabled: true, clean_config: '', envs: '' }
+  repoConfig.value = { source_type: 'git', source_url: '', target_path: '', branch: '', sparse_path: '', single_file: false, proxy: 'none', proxy_url: '', auth_token: '' }
+  cleanType.value = 'none'
+  cleanKeep.value = 30
+  isEdit.value = false
+  showRepoDialog.value = true
 }
 
 function openEdit(task: Task) {
@@ -153,13 +184,27 @@ function openEdit(task: Task) {
   }
   envSearchQuery.value = ''
   isEdit.value = true
-  showDialog.value = true
+
+  // 根据任务类型打开不同弹窗
+  if (task.type === 'repo') {
+    if (task.config) {
+      try {
+        repoConfig.value = JSON.parse(task.config)
+      } catch {
+        repoConfig.value = { source_type: 'git', source_url: '', target_path: '', branch: '', sparse_path: '', single_file: false, proxy: 'none', proxy_url: '', auth_token: '' }
+      }
+    }
+    showRepoDialog.value = true
+  } else {
+    showDialog.value = true
+  }
 }
 
 async function saveTask() {
   try {
     editingTask.value.clean_config = cleanConfig.value
     editingTask.value.envs = envsString.value
+    editingTask.value.type = 'task'
     if (isEdit.value && editingTask.value.id) {
       await api.tasks.update(editingTask.value.id, editingTask.value)
       toast.success('任务已更新')
@@ -168,6 +213,24 @@ async function saveTask() {
       toast.success('任务已创建')
     }
     showDialog.value = false
+    loadTasks()
+  } catch { toast.error('保存失败') }
+}
+
+async function saveRepoTask() {
+  try {
+    editingTask.value.clean_config = cleanConfig.value
+    editingTask.value.type = 'repo'
+    editingTask.value.config = JSON.stringify(repoConfig.value)
+    editingTask.value.command = `[${repoConfig.value.source_type}] ${repoConfig.value.source_url}`
+    if (isEdit.value && editingTask.value.id) {
+      await api.tasks.update(editingTask.value.id, editingTask.value)
+      toast.success('同步任务已更新')
+    } else {
+      await api.tasks.create(editingTask.value)
+      toast.success('同步任务已创建')
+    }
+    showRepoDialog.value = false
     loadTasks()
   } catch { toast.error('保存失败') }
 }
@@ -194,7 +257,7 @@ async function runTask(id: number) {
 
 async function toggleTask(task: Task, enabled: boolean) {
   try {
-    await api.tasks.update(task.id, { name: task.name, command: task.command, schedule: task.schedule, timeout: task.timeout, work_dir: task.work_dir, clean_config: task.clean_config, envs: task.envs, enabled })
+    await api.tasks.update(task.id, { ...task, enabled })
     toast.success(enabled ? '任务已启用' : '任务已禁用')
     loadTasks()
   } catch { toast.error('操作失败') }
@@ -202,6 +265,10 @@ async function toggleTask(task: Task, enabled: boolean) {
 
 function viewLogs(taskId: number) {
   router.push({ path: '/history', query: { task_id: String(taskId) } })
+}
+
+function getTaskTypeLabel(type: string) {
+  return type === 'repo' ? '仓库' : '普通'
 }
 
 onMounted(() => {
@@ -222,6 +289,9 @@ onMounted(() => {
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input v-model="filterName" placeholder="搜索任务..." class="h-9 pl-9 w-full sm:w-56 text-sm" @input="handleSearch" />
         </div>
+        <Button variant="outline" @click="openCreateRepo" class="shrink-0">
+          <GitBranch class="h-4 w-4 sm:mr-2" /> <span class="hidden sm:inline">仓库同步</span>
+        </Button>
         <Button @click="openCreate" class="shrink-0">
           <Plus class="h-4 w-4 sm:mr-2" /> <span class="hidden sm:inline">新建任务</span>
         </Button>
@@ -232,8 +302,9 @@ onMounted(() => {
       <!-- 表头 -->
       <div class="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-sm text-muted-foreground font-medium min-w-[700px]">
         <span class="w-12 shrink-0">ID</span>
+        <span class="w-16 shrink-0">类型</span>
         <span class="w-20 sm:w-28 shrink-0">名称</span>
-        <span class="w-32 sm:flex-1 shrink-0 sm:shrink">命令</span>
+        <span class="w-32 sm:flex-1 shrink-0 sm:shrink">命令/地址</span>
         <span class="w-32 shrink-0 hidden md:block">定时规则</span>
         <span class="w-40 shrink-0 hidden lg:block">上次执行</span>
         <span class="w-40 shrink-0 hidden lg:block">下次执行</span>
@@ -251,11 +322,16 @@ onMounted(() => {
           class="flex items-center gap-4 px-4 py-2 hover:bg-muted/50 transition-colors"
         >
           <span class="w-12 shrink-0 text-muted-foreground text-sm">#{{ task.id }}</span>
+          <span class="w-16 shrink-0">
+            <Badge :variant="task.type === 'repo' ? 'default' : 'secondary'" class="text-xs">
+              {{ getTaskTypeLabel(task.type || 'task') }}
+            </Badge>
+          </span>
           <span class="w-20 sm:w-28 font-medium truncate shrink-0 text-sm">
             <TextOverflow :text="task.name" title="任务名称" />
           </span>
           <code class="w-32 sm:flex-1 shrink-0 sm:shrink text-muted-foreground truncate text-xs bg-muted px-2 py-1 rounded">
-            <TextOverflow :text="task.command" title="执行命令" />
+            <TextOverflow :text="task.command" :title="task.type === 'repo' ? '同步地址' : '执行命令'" />
           </code>
           <code class="w-36 shrink-0 text-muted-foreground text-xs bg-muted px-2 py-1 rounded hidden md:block">{{ task.schedule }}</code>
           <span class="w-40 shrink-0 text-muted-foreground text-xs hidden lg:block">{{ task.last_run || '-' }}</span>
@@ -283,6 +359,7 @@ onMounted(() => {
       <Pagination :total="total" :page="currentPage" @update:page="handlePageChange" />
     </div>
 
+    <!-- 普通任务弹窗 -->
     <Dialog v-model:open="showDialog">
       <DialogContent class="sm:max-w-[500px]">
         <DialogHeader>
@@ -388,6 +465,121 @@ onMounted(() => {
         <DialogFooter>
           <Button variant="outline" @click="showDialog = false">取消</Button>
           <Button @click="saveTask">保存</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- 仓库同步任务弹窗 -->
+    <Dialog v-model:open="showRepoDialog">
+      <DialogContent class="sm:max-w-[500px] max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{{ isEdit ? '编辑仓库同步' : '新建仓库同步' }}</DialogTitle>
+        </DialogHeader>
+        <div class="grid gap-4 py-4 overflow-y-auto flex-1 pr-4 custom-scrollbar">
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">任务名称</Label>
+            <Input v-model="editingTask.name" placeholder="我的仓库同步" class="col-span-3" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">源类型</Label>
+            <Select :model-value="repoConfig.source_type" @update:model-value="(v) => repoConfig.source_type = String(v || 'git')">
+              <SelectTrigger class="col-span-3">
+                <SelectValue placeholder="选择源类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="git">Git 仓库</SelectItem>
+                <SelectItem value="url">URL 下载</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">源地址</Label>
+            <Input v-model="repoConfig.source_url" :placeholder="repoConfig.source_type === 'git' ? 'https://github.com/user/repo.git' : 'https://example.com/file.js'" class="col-span-3 font-mono text-sm" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">目标路径</Label>
+            <div class="col-span-3">
+              <DirTreeSelect :model-value="repoConfig.target_path || ''" @update:model-value="v => repoConfig.target_path = v" />
+            </div>
+          </div>
+          <div v-if="repoConfig.source_type === 'git'" class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">分支</Label>
+            <Input v-model="repoConfig.branch" placeholder="main (可选)" class="col-span-3" autocomplete="off" />
+          </div>
+          <div v-if="repoConfig.source_type === 'git'" class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">稀疏路径</Label>
+            <Input v-model="repoConfig.sparse_path" placeholder="仅拉取指定目录或文件 (可选)" class="col-span-3" autocomplete="off" />
+          </div>
+          <div v-if="repoConfig.source_type === 'git' && repoConfig.sparse_path" class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">单文件模式</Label>
+            <div class="col-span-3 flex items-center gap-2">
+              <Checkbox :checked="repoConfig.single_file" @update:checked="(v: boolean) => repoConfig.single_file = v" />
+              <span class="text-sm text-muted-foreground">直接下载文件（适用于单个文件同步）</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">代理</Label>
+            <Select :model-value="repoConfig.proxy" @update:model-value="(v) => repoConfig.proxy = String(v || 'none')">
+              <SelectTrigger class="col-span-3">
+                <SelectValue placeholder="选择代理" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in proxyOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div v-if="repoConfig.proxy === 'custom'" class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">代理地址</Label>
+            <Input v-model="repoConfig.proxy_url" placeholder="https://your-proxy.com/" class="col-span-3 font-mono text-sm" autocomplete="off" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">认证Token</Label>
+            <Input v-model="repoConfig.auth_token" type="text" placeholder="可选，用于私有仓库" class="col-span-3" autocomplete="new-password" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">定时规则</Label>
+            <Input v-model="editingTask.schedule" placeholder="0 0 0 * * *" class="col-span-3 font-mono text-sm" />
+          </div>
+          <div class="grid grid-cols-4 items-start gap-4">
+            <span></span>
+            <div class="col-span-3">
+              <p class="text-xs text-muted-foreground mb-2">格式: 秒 分 时 日 月 周</p>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="preset in cronPresets"
+                  :key="preset.value"
+                  class="px-2 py-0.5 text-xs rounded-md bg-muted hover:bg-accent cursor-pointer transition-colors"
+                  @click="editingTask.schedule = preset.value"
+                >
+                  {{ preset.label }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">超时(分钟)</Label>
+            <Input v-model.number="editingTask.timeout" type="number" placeholder="30" class="col-span-3" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label class="text-right text-sm">日志清理</Label>
+            <div class="col-span-3 flex gap-2">
+              <Select :model-value="cleanType" @update:model-value="(v) => cleanType = String(v || 'none')">
+                <SelectTrigger class="w-28">
+                  <SelectValue placeholder="不清理" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">不清理</SelectItem>
+                  <SelectItem value="day">按天数</SelectItem>
+                  <SelectItem value="count">按条数</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input v-if="cleanType && cleanType !== 'none'" v-model.number="cleanKeep" type="number" :placeholder="cleanType === 'day' ? '保留天数' : '保留条数'" class="flex-1" />
+            </div>
+          </div>
+        </div>
+        <DialogFooter class="pt-4 border-t">
+          <Button variant="outline" @click="showRepoDialog = false">取消</Button>
+          <Button @click="saveRepoTask">保存</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

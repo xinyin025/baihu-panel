@@ -74,7 +74,12 @@ COPY --from=frontend-builder /app/web/dist ./internal/static/dist
 # Copy configs and entrypoint
 COPY --from=backend-builder /app/configs ./configs
 COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh && touch "dont-not-delete-anythings|不要删除这里的任何东西"
+
+# Copy sync.py to /opt
+COPY sync.py /opt/sync.py
+RUN chmod +x /opt/sync.py \
+    && chmod +x docker-entrypoint.sh \
+    && touch "dont-not-delete-anythings"
 
 EXPOSE 8052
 

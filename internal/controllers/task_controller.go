@@ -49,7 +49,9 @@ func resolveWorkDir(workDir string) string {
 func (tc *TaskController) CreateTask(c *gin.Context) {
 	var req struct {
 		Name        string `json:"name" binding:"required"`
-		Command     string `json:"command" binding:"required"`
+		Command     string `json:"command"`
+		Type        string `json:"type"`
+		Config      string `json:"config"`
 		Schedule    string `json:"schedule" binding:"required"`
 		Timeout     int    `json:"timeout"`
 		WorkDir     string `json:"work_dir"`
@@ -62,6 +64,12 @@ func (tc *TaskController) CreateTask(c *gin.Context) {
 		return
 	}
 
+	// 普通任务需要命令
+	if req.Type != "repo" && req.Command == "" {
+		utils.BadRequest(c, "命令不能为空")
+		return
+	}
+
 	if err := tc.cronService.ValidateCron(req.Schedule); err != nil {
 		utils.BadRequest(c, "无效的cron表达式: "+err.Error())
 		return
@@ -70,7 +78,7 @@ func (tc *TaskController) CreateTask(c *gin.Context) {
 	// 转换为绝对路径
 	workDir := resolveWorkDir(req.WorkDir)
 
-	task := tc.taskService.CreateTask(req.Name, req.Command, req.Schedule, req.Timeout, workDir, req.CleanConfig, req.Envs)
+	task := tc.taskService.CreateTask(req.Name, req.Command, req.Schedule, req.Timeout, workDir, req.CleanConfig, req.Envs, req.Type, req.Config)
 	tc.cronService.AddTask(task)
 
 	utils.Success(c, task)
@@ -110,6 +118,8 @@ func (tc *TaskController) UpdateTask(c *gin.Context) {
 	var req struct {
 		Name        string `json:"name"`
 		Command     string `json:"command"`
+		Type        string `json:"type"`
+		Config      string `json:"config"`
 		Schedule    string `json:"schedule"`
 		Timeout     int    `json:"timeout"`
 		WorkDir     string `json:"work_dir"`
@@ -130,7 +140,7 @@ func (tc *TaskController) UpdateTask(c *gin.Context) {
 		}
 	}
 
-	task := tc.taskService.UpdateTask(id, req.Name, req.Command, req.Schedule, req.Timeout, resolveWorkDir(req.WorkDir), req.CleanConfig, req.Envs, req.Enabled)
+	task := tc.taskService.UpdateTask(id, req.Name, req.Command, req.Schedule, req.Timeout, resolveWorkDir(req.WorkDir), req.CleanConfig, req.Envs, req.Enabled, req.Type, req.Config)
 	if task == nil {
 		utils.NotFound(c, "任务不存在")
 		return

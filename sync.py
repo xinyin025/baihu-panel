@@ -110,9 +110,26 @@ def sync_git_file(args, repo_url, env):
         sys.exit(1)
 
 
+def is_raw_file_url(url):
+    """检测是否是 raw 文件 URL"""
+    raw_patterns = [
+        "raw.githubusercontent.com",
+        "/raw/",
+        "/-/raw/",
+        "/blob/",
+    ]
+    return any(pattern in url for pattern in raw_patterns)
+
+
 def sync_git(args):
     """Git 仓库同步"""
     env = os.environ.copy()
+
+    # 如果 source_url 是 raw 文件 URL，自动切换到 URL 下载模式
+    if is_raw_file_url(args.source_url):
+        print("检测到 raw 文件 URL，自动切换到 URL 下载模式")
+        sync_url(args)
+        return
 
     # 设置 HTTP 代理
     if args.http_proxy:
@@ -159,6 +176,12 @@ def sync_git(args):
         if parent_dir:
             os.makedirs(parent_dir, exist_ok=True)
 
+        # 如果目标目录已存在且不为空，报错提示
+        if os.path.exists(dest) and os.listdir(dest):
+            print(f"错误: 目标目录 '{dest}' 已存在且不为空，无法执行 git clone")
+            print("提示: 请清空目标目录或指定一个新目录")
+            sys.exit(1)
+
         # 稀疏 clone（如果指定了 path）
         if args.path:
             run([
@@ -195,6 +218,16 @@ def sync_url(args):
     print(f"下载地址: {download_url}")
     
     dest = args.target_path
+    
+    # 如果目标路径是目录或以 / 结尾，从 URL 中提取文件名
+    if os.path.isdir(dest) or dest.endswith("/"):
+        # 从 URL 中提取文件名
+        url_path = args.source_url.split("?")[0]  # 去掉查询参数
+        filename = os.path.basename(url_path)
+        if not filename:
+            filename = "downloaded_file"
+        dest = os.path.join(dest, filename)
+        print(f"目标文件: {dest}")
     
     # 确保目标目录存在
     parent_dir = os.path.dirname(dest)

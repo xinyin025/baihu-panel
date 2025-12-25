@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -354,12 +355,25 @@ func (es *ExecutorService) executeRepoTask(task *models.Task) *ExecutionResult {
 		return result
 	}
 
+	// 处理目标路径：为空则使用 scripts 目录，相对路径则基于 scripts 目录
+	targetPath := config.TargetPath
+	if targetPath == "" {
+		targetPath = constant.ScriptsWorkDir
+	} else if !filepath.IsAbs(targetPath) {
+		targetPath = filepath.Join(constant.ScriptsWorkDir, targetPath)
+	}
+	// 转换为绝对路径
+	absTargetPath, err := filepath.Abs(targetPath)
+	if err != nil {
+		absTargetPath = targetPath
+	}
+
 	// 构建 sync.py 命令参数
 	args := []string{
 		"/opt/sync.py",
 		"--source-type", config.SourceType,
 		"--source-url", config.SourceURL,
-		"--target-path", config.TargetPath,
+		"--target-path", absTargetPath,
 	}
 
 	// Git 分支

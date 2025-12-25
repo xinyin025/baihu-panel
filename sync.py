@@ -255,6 +255,9 @@ def main():
 
     args = parser.parse_args()
 
+    # 打印原始命令行参数
+    print("参数:", " ".join(sys.argv[1:]))
+
     if args.source_type == "git":
         sync_git(args)
     else:

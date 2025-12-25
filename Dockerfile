@@ -79,7 +79,8 @@ COPY docker-entrypoint.sh .
 COPY sync.py /opt/sync.py
 RUN chmod +x /opt/sync.py \
     && chmod +x docker-entrypoint.sh \
-    && touch "dont-not-delete-anythings"
+    && touch "dont-not-delete-anythings" \
+    && echo "set encoding=utf-8" >> /etc/vim/vimrc
 
 EXPOSE 8052
 

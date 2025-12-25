@@ -121,6 +121,14 @@ def is_raw_file_url(url):
     return any(pattern in url for pattern in raw_patterns)
 
 
+def get_repo_name(url):
+    """从 Git URL 中提取仓库名"""
+    # 去掉末尾的 .git
+    url = url.rstrip("/").rstrip(".git")
+    # 提取最后一部分作为仓库名
+    return os.path.basename(url)
+
+
 def sync_git(args):
     """Git 仓库同步"""
     env = os.environ.copy()
@@ -151,8 +159,15 @@ def sync_git(args):
         sync_git_file(args, repo_url, env)
         return
 
-    # 检查目标目录是否已存在 git 仓库
+    # 如果目标路径是已存在的目录且不是 git 仓库，自动追加仓库名作为子目录
     git_dir = os.path.join(dest, ".git")
+    if os.path.isdir(dest) and not os.path.exists(git_dir):
+        repo_name = get_repo_name(args.source_url)
+        dest = os.path.join(dest, repo_name)
+        print(f"目标路径自动追加仓库名: {dest}")
+        git_dir = os.path.join(dest, ".git")
+
+    # 检查目标目录是否已存在 git 仓库
     is_existing_repo = os.path.exists(git_dir)
 
     if is_existing_repo:

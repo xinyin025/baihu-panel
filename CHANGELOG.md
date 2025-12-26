@@ -10,9 +10,11 @@ docker run -d \
   --name baihu \
   -p 8052:8052 \
   -v $(pwd)/data:/app/data \
-  -v $(pwd)/configs:/app/configs \
   -v $(pwd)/envs:/app/envs \
   -e TZ=Asia/Shanghai \
+  -e BH_DB_TYPE=sqlite \
+  -e BH_DB_PATH=/app/data/ql.db \
+  -e BH_DB_TABLE_PREFIX=baihu_ \
   --restart unless-stopped \
   ghcr.io/engigu/baihu:latest
 ```

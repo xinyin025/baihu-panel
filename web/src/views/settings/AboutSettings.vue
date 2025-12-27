@@ -61,6 +61,10 @@ onMounted(loadAbout)
             <span class="text-sm">{{ aboutInfo?.mem_usage || '-' }}</span>
           </div>
           <div class="flex justify-between items-center">
+            <span class="text-muted-foreground text-sm">协程数量:</span>
+            <span class="text-sm">{{ aboutInfo?.goroutines || '-' }}</span>
+          </div>
+          <div class="flex justify-between items-center">
             <span class="text-muted-foreground text-sm">运行时间:</span>
             <span class="text-sm">{{ aboutInfo?.uptime || '-' }}</span>
           </div>

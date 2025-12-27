@@ -313,6 +313,7 @@ export interface AboutInfo {
   version: string
   build_time: string
   mem_usage: string
+  goroutines: number
   uptime: string
   task_count: number
   log_count: number

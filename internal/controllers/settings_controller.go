@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"baihu/internal/constant"
@@ -184,6 +185,7 @@ func (sc *SettingsController) GetAbout(c *gin.Context) {
 		"version":    constant.Version,
 		"build_time": constant.BuildTime,
 		"mem_usage":  memUsage,
+		"goroutines": runtime.NumGoroutine(),
 		"uptime":     uptime,
 		"task_count": taskCount,
 		"log_count":  logCount,

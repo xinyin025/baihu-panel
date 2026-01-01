@@ -189,6 +189,22 @@ func (a *Agent) connectWS() error {
 		return err
 	}
 
+	// 设置读取超时（比服务端 ping 间隔长一些）
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+
+	// 设置 Ping 处理器，收到 Ping 时重置读取超时
+	conn.SetPingHandler(func(appData string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		// 回复 Pong
+		return conn.WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(5*time.Second))
+	})
+
+	// 设置 Pong 处理器，收到 Pong 时重置读取超时
+	conn.SetPongHandler(func(appData string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
 	a.wsMu.Lock()
 	a.wsConn = conn
 	a.wsStopCh = make(chan struct{})
@@ -230,6 +246,9 @@ func (a *Agent) readWS() {
 		if err != nil {
 			return
 		}
+
+		// 收到消息，重置读取超时
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
 		var msg WSMessage
 		if err := json.Unmarshal(message, &msg); err != nil {

@@ -410,7 +410,7 @@ func (c *AgentController) wsReadPump(ac *services.AgentConnection, agent *models
 		if r := recover(); r != nil {
 			logger.Errorf("[AgentWS] Agent #%d wsReadPump panic: %v", agent.ID, r)
 		}
-		c.wsManager.Unregister(agent.ID)
+		c.wsManager.Unregister(agent.ID, ac)
 	}()
 
 	// 检查连接是否有效（可能是旧连接被新连接替换）

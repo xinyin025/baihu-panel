@@ -161,12 +161,13 @@ func (m *AgentWSManager) Register(agentID uint, conn *websocket.Conn, ip string)
 	return ac
 }
 
-// Unregister 注销连接
-func (m *AgentWSManager) Unregister(agentID uint) {
+// Unregister 注销连接（只注销指定的连接实例）
+func (m *AgentWSManager) Unregister(agentID uint, ac *AgentConnection) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if conn, exists := m.connections[agentID]; exists {
+	// 只有当前连接和 map 中的连接是同一个实例时才删除
+	if conn, exists := m.connections[agentID]; exists && conn == ac {
 		// 减少 IP 连接计数
 		if conn.IP != "" {
 			if count, ok := m.ipConnections[conn.IP]; ok && count > 0 {

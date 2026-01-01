@@ -195,12 +195,17 @@ func (es *ExecutorService) saveTaskLogCallback(taskID uint, command string, resu
 		status = "failed"
 	}
 
+	startTime := models.LocalTime(result.Start)
+	endTime := models.LocalTime(result.End)
+
 	taskLog := &models.TaskLog{
-		TaskID:   taskID,
-		Command:  command,
-		Output:   compressed,
-		Status:   status,
-		Duration: result.End.Sub(result.Start).Milliseconds(),
+		TaskID:    taskID,
+		Command:   command,
+		Output:    compressed,
+		Status:    status,
+		Duration:  result.End.Sub(result.Start).Milliseconds(),
+		StartTime: &startTime,
+		EndTime:   &endTime,
 	}
 
 	if err := database.DB.Create(taskLog).Error; err != nil {

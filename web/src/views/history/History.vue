@@ -248,8 +248,12 @@ watch(() => route.query.task_id, (newTaskId) => {
             <span>{{ formatDuration(selectedLog.duration) }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-muted-foreground">执行时间</span>
-            <span>{{ selectedLog.created_at }}</span>
+            <span class="text-muted-foreground">开始时间</span>
+            <span>{{ selectedLog.start_time || '-' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted-foreground">结束时间</span>
+            <span>{{ selectedLog.end_time || '-' }}</span>
           </div>
           <div class="pt-1">
             <span class="text-muted-foreground">命令</span>

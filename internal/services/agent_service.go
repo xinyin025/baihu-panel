@@ -339,6 +339,16 @@ func (s *AgentService) ReportResult(result *models.AgentTaskResult) error {
 		ExitCode: result.ExitCode,
 	}
 
+	// 处理开始和结束时间
+	if result.StartTime > 0 {
+		startTime := models.LocalTime(time.Unix(result.StartTime, 0))
+		taskLog.StartTime = &startTime
+	}
+	if result.EndTime > 0 {
+		endTime := models.LocalTime(time.Unix(result.EndTime, 0))
+		taskLog.EndTime = &endTime
+	}
+
 	if err := database.DB.Create(taskLog).Error; err != nil {
 		return err
 	}

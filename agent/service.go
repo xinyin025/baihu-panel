@@ -12,8 +12,46 @@ import (
 
 // ========== PID 文件管理 ==========
 
+var pidFileLock *os.File
+
 func getPidFile() string {
 	return filepath.Join(dataDir, "agent.pid")
+}
+
+func getLockFile() string {
+	return filepath.Join(dataDir, "agent.lock")
+}
+
+// tryLock 尝试获取文件锁，确保只有一个实例运行
+func tryLock() bool {
+	os.MkdirAll(dataDir, 0755)
+	lockFile := getLockFile()
+
+	var err error
+	pidFileLock, err = os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return false
+	}
+
+	// 尝试获取排他锁（非阻塞）
+	err = syscall.Flock(int(pidFileLock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+	if err != nil {
+		pidFileLock.Close()
+		pidFileLock = nil
+		return false
+	}
+
+	return true
+}
+
+// unlock 释放文件锁
+func unlock() {
+	if pidFileLock != nil {
+		syscall.Flock(int(pidFileLock.Fd()), syscall.LOCK_UN)
+		pidFileLock.Close()
+		pidFileLock = nil
+		os.Remove(getLockFile())
+	}
 }
 
 func writePidFile() {

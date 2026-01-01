@@ -215,7 +215,10 @@ func (a *Agent) closeWS() {
 }
 
 func (a *Agent) readWS() {
-	defer a.closeWS() // 读取结束时关闭连接，停止 heartbeatLoop
+	defer func() {
+		log.Info("readWS 退出，准备关闭连接")
+		a.closeWS()
+	}()
 
 	for {
 		a.wsMu.Lock()
@@ -223,6 +226,7 @@ func (a *Agent) readWS() {
 		a.wsMu.Unlock()
 
 		if conn == nil {
+			log.Warn("readWS: wsConn 为 nil")
 			return
 		}
 
@@ -329,7 +333,11 @@ func (a *Agent) sendWSMessage(msgType string, data interface{}) error {
 	msgBytes, _ := json.Marshal(msg)
 
 	a.wsConn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	return a.wsConn.WriteMessage(websocket.TextMessage, msgBytes)
+	if err := a.wsConn.WriteMessage(websocket.TextMessage, msgBytes); err != nil {
+		log.Warnf("发送消息失败 (%s): %v", msgType, err)
+		return err
+	}
+	return nil
 }
 
 func (a *Agent) heartbeatLoop() {

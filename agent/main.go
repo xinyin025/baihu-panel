@@ -134,7 +134,7 @@ var isDaemon = false
 var isRestart = false
 
 func cmdStart() {
-	// 检查是否已经在运行
+	// 检查是否已经在运行（使用文件锁）
 	pid := readPidFile()
 	if pid != 0 && isProcessRunning(pid) {
 		fmt.Printf("Agent 已在运行 (PID: %d)\n", pid)
@@ -148,6 +148,13 @@ func cmdStart() {
 	}
 
 	// 以下是 daemon 子进程的逻辑
+	// 尝试获取文件锁
+	if !tryLock() {
+		fmt.Println("Agent 已在运行（无法获取锁）")
+		return
+	}
+	defer unlock()
+
 	initLogger(logFile, true)
 
 	config := &Config{Interval: 30}
@@ -206,6 +213,13 @@ func cmdRun() {
 			return
 		}
 	}
+
+	// 尝试获取文件锁
+	if !tryLock() {
+		fmt.Println("Agent 已在运行（无法获取锁）")
+		return
+	}
+	defer unlock()
 
 	// 重启模式下只输出到文件（因为是从 daemon 进程 exec 过来的）
 	initLogger(logFile, isRestart)

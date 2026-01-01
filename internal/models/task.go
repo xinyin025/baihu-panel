@@ -52,15 +52,17 @@ func (Task) TableName() string {
 
 // TaskLog represents a log entry for task execution
 type TaskLog struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	TaskID    uint      `json:"task_id" gorm:"index"`
-	AgentID   *uint     `json:"agent_id" gorm:"index"` // Agent ID，为空表示本地执行
-	Command   string    `json:"command" gorm:"type:text"`
-	Output    string    `json:"-" gorm:"type:longtext"` // gzip+base64 compressed
-	Status    string    `json:"status" gorm:"size:20"`  // success, failed
-	Duration  int64     `json:"duration"`               // milliseconds
-	ExitCode  int       `json:"exit_code"`
-	CreatedAt LocalTime `json:"created_at"`
+	ID        uint       `json:"id" gorm:"primaryKey"`
+	TaskID    uint       `json:"task_id" gorm:"index"`
+	AgentID   *uint      `json:"agent_id" gorm:"index"` // Agent ID，为空表示本地执行
+	Command   string     `json:"command" gorm:"type:text"`
+	Output    string     `json:"-" gorm:"type:longtext"` // gzip+base64 compressed
+	Status    string     `json:"status" gorm:"size:20"`  // success, failed
+	Duration  int64      `json:"duration"`               // milliseconds
+	ExitCode  int        `json:"exit_code"`
+	StartTime *LocalTime `json:"start_time"`
+	EndTime   *LocalTime `json:"end_time"`
+	CreatedAt LocalTime  `json:"created_at"`
 }
 
 func (TaskLog) TableName() string {

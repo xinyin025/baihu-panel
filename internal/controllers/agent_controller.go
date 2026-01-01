@@ -407,17 +407,28 @@ func (c *AgentController) WSConnect(ctx *gin.Context) {
 // wsReadPump 读取消息
 func (c *AgentController) wsReadPump(ac *services.AgentConnection, agent *models.Agent) {
 	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("[AgentWS] Agent #%d wsReadPump panic: %v", agent.ID, r)
+		}
 		c.wsManager.Unregister(agent.ID)
 	}()
 
-	ac.Conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+	// 检查连接是否有效
+	if ac == nil || ac.IsClosed() {
+		logger.Warnf("[AgentWS] Agent #%d 连接无效", agent.ID)
+		return
+	}
+
+	ac.SetReadDeadline(time.Now().Add(90 * time.Second))
+	// 注意：SetPongHandler 需要直接访问 Conn，但这里我们在连接建立后立即设置
+	// 所以是安全的，因为此时连接还没有被其他 goroutine 关闭
 	ac.Conn.SetPongHandler(func(string) error {
-		ac.Conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		ac.SetReadDeadline(time.Now().Add(90 * time.Second))
 		return nil
 	})
 
 	for {
-		_, message, err := ac.Conn.ReadMessage()
+		_, message, err := ac.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				logger.Warnf("[AgentWS] Agent #%d 读取错误: %v", agent.ID, err)
@@ -436,6 +447,12 @@ func (c *AgentController) wsReadPump(ac *services.AgentConnection, agent *models
 
 // wsWritePump 写入消息
 func (c *AgentController) wsWritePump(ac *services.AgentConnection) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Errorf("[AgentWS] Agent #%d wsWritePump panic: %v", ac.AgentID, r)
+		}
+	}()
+
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -445,12 +462,17 @@ func (c *AgentController) wsWritePump(ac *services.AgentConnection) {
 			if !ok {
 				return
 			}
+			if ac.IsClosed() {
+				return
+			}
 			if err := ac.WriteMessage(message); err != nil {
 				return
 			}
 		case <-ticker.C:
-			ac.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := ac.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			if ac.IsClosed() {
+				return
+			}
+			if err := ac.WritePing(); err != nil {
 				return
 			}
 		}

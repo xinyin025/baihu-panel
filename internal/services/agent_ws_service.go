@@ -30,12 +30,13 @@ const (
 
 // AgentConnection Agent WebSocket 连接
 type AgentConnection struct {
-	AgentID   uint
-	IP        string
-	Conn      *websocket.Conn
-	Send      chan []byte
-	LastPing  time.Time
-	mu        sync.Mutex
+	AgentID  uint
+	IP       string
+	Conn     *websocket.Conn
+	Send     chan []byte
+	LastPing time.Time
+	closed   bool
+	mu       sync.Mutex
 }
 
 // WSMessage WebSocket 消息结构
@@ -266,25 +267,69 @@ func (m *AgentWSManager) cleanupLoop() {
 func (c *AgentConnection) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.closed {
+		return
+	}
+	c.closed = true
 	if c.Conn != nil {
 		c.Conn.Close()
-		c.Conn = nil
 	}
 	if c.Send != nil {
 		close(c.Send)
-		c.Send = nil
 	}
+}
+
+// IsClosed 检查连接是否已关闭
+func (c *AgentConnection) IsClosed() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.closed
 }
 
 // WriteMessage 写入消息
 func (c *AgentConnection) WriteMessage(data []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.Conn == nil {
+	if c.closed || c.Conn == nil {
 		return nil
 	}
 	c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	return c.Conn.WriteMessage(websocket.TextMessage, data)
+}
+
+// SetReadDeadline 设置读取超时
+func (c *AgentConnection) SetReadDeadline(t time.Time) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed || c.Conn == nil {
+		return nil
+	}
+	return c.Conn.SetReadDeadline(t)
+}
+
+// ReadMessage 读取消息
+func (c *AgentConnection) ReadMessage() (int, []byte, error) {
+	// 不加锁，因为 ReadMessage 是阻塞的
+	// 但需要先检查连接状态
+	c.mu.Lock()
+	if c.closed || c.Conn == nil {
+		c.mu.Unlock()
+		return 0, nil, websocket.ErrCloseSent
+	}
+	conn := c.Conn
+	c.mu.Unlock()
+	return conn.ReadMessage()
+}
+
+// WritePing 发送 ping 消息
+func (c *AgentConnection) WritePing() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed || c.Conn == nil {
+		return nil
+	}
+	c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	return c.Conn.WriteMessage(websocket.PingMessage, nil)
 }
 
 // UpdatePing 更新心跳时间

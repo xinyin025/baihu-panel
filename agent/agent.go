@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
@@ -459,6 +460,9 @@ func (a *Agent) clearAllTasks() {
 
 func (a *Agent) executeTask(task *AgentTask) {
 	log.Infof("执行任务 #%d %s", task.ID, task.Name)
+	
+	// 记录进程用户信息
+	log.Infof("任务 #%d 进程 UID: %d, GID: %d", task.ID, os.Getuid(), os.Getgid())
 
 	start := time.Now()
 	result := &TaskResult{
@@ -475,22 +479,22 @@ func (a *Agent) executeTask(task *AgentTask) {
 	defer cancel()
 
 	var cmd *exec.Cmd
+	finalCommand := task.Command
+	
 	if runtime.GOOS == "windows" {
-		cmd = exec.CommandContext(ctx, "cmd", "/c", task.Command)
-	} else {
-		cmd = exec.CommandContext(ctx, "sh", "-c", task.Command)
-	}
-
-	if task.WorkDir != "" {
-		cmd.Dir = task.WorkDir
-		log.Infof("任务 #%d 工作目录: %s", task.ID, task.WorkDir)
-		
-		// 验证工作目录是否存在
-		if _, err := os.Stat(task.WorkDir); os.IsNotExist(err) {
-			log.Warnf("任务 #%d 工作目录不存在: %s", task.ID, task.WorkDir)
+		// Windows: 如果有工作目录，在命令前加 cd
+		if task.WorkDir != "" {
+			finalCommand = fmt.Sprintf("cd /d %s && %s", task.WorkDir, task.Command)
+			log.Infof("任务 #%d 工作目录: %s", task.ID, task.WorkDir)
 		}
+		cmd = exec.CommandContext(ctx, "cmd", "/c", finalCommand)
 	} else {
-		log.Infof("任务 #%d 使用默认工作目录", task.ID)
+		// Linux/Unix: 如果有工作目录，在命令前加 cd
+		if task.WorkDir != "" {
+			finalCommand = fmt.Sprintf("cd %s && %s", task.WorkDir, task.Command)
+			log.Infof("任务 #%d 工作目录: %s", task.ID, task.WorkDir)
+		}
+		cmd = exec.CommandContext(ctx, "sh", "-c", finalCommand)
 	}
 
 	var stdout, stderr bytes.Buffer

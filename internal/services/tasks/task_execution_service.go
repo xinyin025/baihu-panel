@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"baihu/internal/constant"
 	"baihu/internal/database"
 	"baihu/internal/logger"
 	"baihu/internal/models"
@@ -56,6 +57,27 @@ type TaskExecutionResult struct {
 
 // ExecuteTask 执行任务（统一入口）
 func (s *TaskExecutionService) ExecuteTask(req *TaskExecutionRequest) error {
+	task := req.Task
+	start := time.Now()
+	
+	// 演示模式：直接返回模拟结果
+	if constant.DemoMode {
+		end := time.Now()
+		demoOutput := fmt.Sprintf("[演示模式] 任务 #%d (%s) 执行已跳过\n实际命令不会运行: %s", task.ID, task.Name, task.Command)
+		result := &TaskExecutionResult{
+			TaskID:   task.ID,
+			AgentID:  nil,
+			Command:  task.Command,
+			Output:   demoOutput,
+			Status:   "success",
+			Duration: end.Sub(start).Milliseconds(),
+			ExitCode: 0,
+			Start:    start,
+			End:      end,
+		}
+		return s.processExecutionResult(result)
+	}
+	
 	if req.Task.AgentID != nil && *req.Task.AgentID > 0 {
 		// 远程执行：通过 Agent
 		return s.executeRemote(req)

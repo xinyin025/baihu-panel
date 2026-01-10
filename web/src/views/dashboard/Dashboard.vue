@@ -221,7 +221,7 @@ const renderLineChart = () => {
         </div>`
       }
     },
-    responsive: [{ breakpoint: 768, options: { chart: { height: 260 }, legend: { position: 'bottom', offsetY: 0 } } }]
+    responsive: [{ breakpoint: 768, options: { chart: { height: 260 }, legend: { position: 'top', horizontalAlign: 'center', floating: false, offsetY: 0 } } }]
   }
   lineChart = new ApexCharts(container, options)
   lineChart.render()

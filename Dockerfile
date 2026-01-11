@@ -104,21 +104,21 @@ RUN VERSION_VAL=$(cat /build-info/version.txt) && \
 # ================================
 # Stage 4: Final image
 # ================================
-FROM debian:bookworm-slim
+FROM ghcr.io/engigu/baihu:base
 
 ENV TZ=Asia/Shanghai
 ENV PATH="/app/envs/node/bin:/app/envs/python/bin:$PATH"
 ENV NODE_PATH="/app/envs/node/lib/node_modules"
 
-# 安装必要系统工具 + Node + Python
-RUN sed -i 's@deb.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list.d/debian.sources \
-    && sed -i 's@security.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list.d/debian.sources \
-    && echo "${TZ}" > /etc/timezone \
-    && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-         tzdata git gcc curl wget vim nodejs htop npm python3 python3-venv python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+# # 安装必要系统工具 + Node + Python
+# RUN sed -i 's@deb.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list.d/debian.sources \
+#     && sed -i 's@security.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list.d/debian.sources \
+#     && echo "${TZ}" > /etc/timezone \
+#     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
+#     && apt-get update \
+#     && apt-get install -y --no-install-recommends \
+#          tzdata git gcc curl wget vim nodejs htop npm python3 python3-venv python3-pip \
+#     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

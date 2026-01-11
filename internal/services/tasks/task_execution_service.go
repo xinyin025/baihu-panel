@@ -5,6 +5,7 @@ import (
 	"baihu/internal/database"
 	"baihu/internal/logger"
 	"baihu/internal/models"
+	"baihu/internal/utils"
 	"bytes"
 	"context"
 	"fmt"
@@ -194,12 +195,15 @@ func (s *TaskExecutionService) prepareCommand(ctx context.Context, task *models.
 		if task.WorkDir != "" {
 			command = fmt.Sprintf("cd %s && %s", task.WorkDir, command)
 		}
-		cmd = exec.CommandContext(ctx, "sh", "-c", command)
+		// 使用工具函数获取合适的 shell
+		shell, _ := utils.GetShell()
+		cmd = exec.CommandContext(ctx, shell, "-c", command)
 	}
 
-	// 设置环境变量
+	// 设置环境变量（始终继承系统环境变量）
+	cmd.Env = os.Environ()
 	if len(envVars) > 0 {
-		cmd.Env = append(os.Environ(), envVars...)
+		cmd.Env = append(cmd.Env, envVars...)
 	}
 
 	return cmd, nil

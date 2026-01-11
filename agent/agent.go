@@ -23,6 +23,25 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// findAvailableShell 查找可用的 shell
+func findAvailableShell() string {
+	// 优先使用环境变量中的 SHELL
+	if envShell := os.Getenv("SHELL"); envShell != "" {
+		return envShell
+	}
+
+	// 尝试按优先级查找可用的 shell
+	shells := []string{"/bin/bash", "/bin/zsh", "/bin/sh"}
+	for _, sh := range shells {
+		if _, err := os.Stat(sh); err == nil {
+			return sh
+		}
+	}
+
+	// 最后回退到 sh（应该总是存在）
+	return "sh"
+}
+
 // WebSocket 消息类型
 const (
 	WSTypeHeartbeat    = "heartbeat"
@@ -520,14 +539,17 @@ func (a *Agent) executeTask(task *AgentTask) {
 			finalCommand = fmt.Sprintf("cd %s && %s", task.WorkDir, task.Command)
 			log.Infof("任务 #%d 工作目录: %s", task.ID, task.WorkDir)
 		}
-		cmd = exec.CommandContext(ctx, "sh", "-c", finalCommand)
+		// 尝试按优先级查找可用的 shell
+		shell := findAvailableShell()
+		cmd = exec.CommandContext(ctx, shell, "-c", finalCommand)
 	}
 
-	// 处理环境变量
+	// 处理环境变量（始终继承系统环境变量）
+	cmd.Env = os.Environ()
 	if task.Envs != "" {
 		envVars := a.parseEnvVars(task.Envs)
 		if len(envVars) > 0 {
-			cmd.Env = append(os.Environ(), envVars...)
+			cmd.Env = append(cmd.Env, envVars...)
 			log.Infof("任务 #%d 设置了 %d 个环境变量", task.ID, len(envVars))
 		}
 	}

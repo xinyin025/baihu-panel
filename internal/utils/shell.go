@@ -17,15 +17,16 @@ func GetShell() (shell string, args []string) {
 		return envShell, []string{}
 	}
 
-	// macOS 默认使用 zsh
-	if runtime.GOOS == "darwin" {
-		if _, err := exec.LookPath("/bin/zsh"); err == nil {
-			return "/bin/zsh", []string{}
+	// 尝试按优先级查找可用的 shell
+	shells := []string{"/bin/bash", "/bin/zsh", "/bin/sh"}
+	for _, sh := range shells {
+		if _, err := os.Stat(sh); err == nil {
+			return sh, []string{}
 		}
 	}
 
-	// Linux 默认使用 bash
-	return "/bin/bash", []string{}
+	// 最后回退到 sh（应该总是存在）
+	return "sh", []string{}
 }
 
 // GetShellCommand 返回执行命令的 shell 和参数

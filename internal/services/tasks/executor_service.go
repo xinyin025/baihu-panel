@@ -3,16 +3,12 @@ package tasks
 import (
 	"baihu/internal/constant"
 	"baihu/internal/logger"
-	"baihu/internal/models"
 	"baihu/internal/utils"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -228,119 +224,6 @@ func (es *ExecutorService) executeTaskInternal(taskID int) *ExecutionResult {
 	es.mu.Lock()
 	delete(es.runningTasks, taskID)
 	es.mu.Unlock()
-
-	return result
-}
-
-// executeNormalTask 执行普通任务
-func (es *ExecutorService) executeNormalTask(task *models.Task) *ExecutionResult {
-	// 演示模式下使用 echo 替换实际命令
-	if constant.DemoMode {
-		return es.ExecuteCommandWithOptions("echo '[演示模式] 任务执行已跳过，实际命令不会运行'", time.Minute, nil, "")
-	}
-
-	// 加载环境变量
-	envVars := es.envService.GetEnvVarsByIDs(task.Envs)
-
-	// 确定工作目录
-	workDir := task.WorkDir
-	if workDir == "" {
-		workDir = constant.ScriptsWorkDir
-	}
-
-	// 使用任务配置的超时时间
-	timeout := task.Timeout
-	if timeout <= 0 {
-		timeout = constant.DefaultTaskTimeout
-	}
-	return es.ExecuteCommandWithOptions(task.Command, time.Duration(timeout)*time.Minute, envVars, workDir)
-}
-
-// executeRepoTask 执行仓库同步任务（调用 sync.py）
-func (es *ExecutorService) executeRepoTask(task *models.Task) *ExecutionResult {
-	// 演示模式下使用 echo 替换实际命令
-	if constant.DemoMode {
-		return es.ExecuteCommandWithOptions("echo '[演示模式] 仓库同步已跳过，实际命令不会运行'", time.Minute, nil, "")
-	}
-
-	result := &ExecutionResult{
-		Success: false,
-		Start:   time.Now(),
-	}
-
-	// 解析仓库配置
-	var config models.RepoConfig
-	if err := json.Unmarshal([]byte(task.Config), &config); err != nil {
-		result.End = time.Now()
-		result.Error = "解析仓库配置失败: " + err.Error()
-		return result
-	}
-
-	// 处理目标路径：为空则使用 scripts 目录，相对路径则基于 scripts 目录
-	targetPath := config.TargetPath
-	if targetPath == "" {
-		targetPath = constant.ScriptsWorkDir
-	} else if !filepath.IsAbs(targetPath) {
-		targetPath = filepath.Join(constant.ScriptsWorkDir, targetPath)
-	}
-	// 转换为绝对路径
-	absTargetPath, err := filepath.Abs(targetPath)
-	if err != nil {
-		absTargetPath = targetPath
-	}
-
-	// 构建 sync.py 命令参数
-	args := []string{
-		"/opt/sync.py",
-		"--source-type", config.SourceType,
-		"--source-url", config.SourceURL,
-		"--target-path", absTargetPath,
-	}
-
-	// Git 分支
-	if config.Branch != "" {
-		args = append(args, "--branch", config.Branch)
-	}
-
-	// 稀疏路径
-	if config.SparsePath != "" {
-		args = append(args, "--path", config.SparsePath)
-	}
-
-	// 单文件模式
-	if config.SingleFile {
-		args = append(args, "--single-file")
-	}
-
-	// 代理设置
-	if config.Proxy != "" && config.Proxy != "none" {
-		args = append(args, "--proxy", config.Proxy)
-		if config.Proxy == "custom" && config.ProxyURL != "" {
-			args = append(args, "--proxy-url", config.ProxyURL)
-		}
-	}
-
-	// 认证 Token
-	if config.AuthToken != "" {
-		args = append(args, "--auth-token", config.AuthToken)
-	}
-
-	// 构建命令
-	command := "python3 " + strings.Join(args, " ")
-
-	// 使用任务配置的超时时间
-	timeout := task.Timeout
-	if timeout <= 0 {
-		timeout = constant.DefaultTaskTimeout
-	}
-
-	// 执行命令
-	execResult := es.ExecuteCommandWithOptions(command, time.Duration(timeout)*time.Minute, nil, "/opt")
-
-	result.End = time.Now()
-	result.Output = execResult.Output
-	result.Success = execResult.Success
-	result.Error = execResult.Error
 
 	return result
 }

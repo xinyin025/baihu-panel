@@ -8,6 +8,7 @@ import (
 	"baihu/internal/utils"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -91,6 +92,11 @@ func (s *TaskExecutionService) ExecuteTask(req *TaskExecutionRequest) error {
 func (s *TaskExecutionService) executeLocal(req *TaskExecutionRequest) error {
 	task := req.Task
 	logger.Infof("[TaskExecution] 本地执行任务 #%d: %s", task.ID, task.Name)
+
+	// 检查任务类型，仓库任务需要特殊处理
+	if task.Type == "repo" {
+		return s.executeRepoTask(req)
+	}
 
 	start := time.Now()
 
@@ -307,4 +313,113 @@ func (s *TaskExecutionService) ProcessAgentResult(agentResult *models.AgentTaskR
 // GetScriptPath 获取脚本路径
 func (s *TaskExecutionService) GetScriptPath(scriptName string) string {
 	return filepath.Join("data", "scripts", scriptName)
+}
+
+// executeRepoTask 执行仓库同步任务（调用 sync.py）
+func (s *TaskExecutionService) executeRepoTask(req *TaskExecutionRequest) error {
+	task := req.Task
+	logger.Infof("[TaskExecution] 执行仓库同步任务 #%d: %s", task.ID, task.Name)
+
+	start := time.Now()
+
+	// 解析仓库配置
+	var config models.RepoConfig
+	if err := json.Unmarshal([]byte(task.Config), &config); err != nil {
+		return s.handleExecutionError(task.ID, "", start, fmt.Errorf("解析仓库配置失败: %v", err))
+	}
+
+	// 处理目标路径：为空则使用 scripts 目录，相对路径则基于 scripts 目录
+	targetPath := config.TargetPath
+	if targetPath == "" {
+		targetPath = constant.ScriptsWorkDir
+	} else if !filepath.IsAbs(targetPath) {
+		targetPath = filepath.Join(constant.ScriptsWorkDir, targetPath)
+	}
+	// 转换为绝对路径
+	absTargetPath, err := filepath.Abs(targetPath)
+	if err != nil {
+		absTargetPath = targetPath
+	}
+
+	// 构建 sync.py 命令参数
+	args := []string{
+		"/opt/sync.py",
+		"--source-type", config.SourceType,
+		"--source-url", config.SourceURL,
+		"--target-path", absTargetPath,
+	}
+
+	// Git 分支
+	if config.Branch != "" {
+		args = append(args, "--branch", config.Branch)
+	}
+
+	// 稀疏路径
+	if config.SparsePath != "" {
+		args = append(args, "--path", config.SparsePath)
+	}
+
+	// 单文件模式
+	if config.SingleFile {
+		args = append(args, "--single-file")
+	}
+
+	// 代理设置
+	if config.Proxy != "" && config.Proxy != "none" {
+		args = append(args, "--proxy", config.Proxy)
+		if config.Proxy == "custom" && config.ProxyURL != "" {
+			args = append(args, "--proxy-url", config.ProxyURL)
+		}
+	}
+
+	// 认证 Token
+	if config.AuthToken != "" {
+		args = append(args, "--auth-token", config.AuthToken)
+	}
+
+	// 准备命令
+	ctx, cancel := s.createContext(task.Timeout)
+	defer cancel()
+
+	// 直接使用 python3 和参数列表，而不是拼接成字符串
+	cmd := exec.CommandContext(ctx, "python3", args...)
+	cmd.Dir = "/opt"
+
+	// 执行命令
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	execErr := cmd.Run()
+	end := time.Now()
+
+	// 构建命令字符串用于日志记录
+	commandStr := "python3 " + strings.Join(args, " ")
+
+	// 构建结果
+	result := &TaskExecutionResult{
+		TaskID:   task.ID,
+		AgentID:  nil,
+		Command:  commandStr,
+		Output:   stdout.String(),
+		Start:    start,
+		End:      end,
+		Duration: end.Sub(start).Milliseconds(),
+	}
+
+	if execErr != nil {
+		result.Status = "failed"
+		result.Output += "\n[ERROR]\n" + stderr.String() + "\n" + execErr.Error()
+		if exitErr, ok := execErr.(*exec.ExitError); ok {
+			result.ExitCode = exitErr.ExitCode()
+		} else {
+			result.ExitCode = 1
+		}
+	} else {
+		result.Status = "success"
+		result.ExitCode = 0
+	}
+
+	// 处理执行结果
+	return s.processExecutionResult(result)
 }

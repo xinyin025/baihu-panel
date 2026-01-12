@@ -232,7 +232,7 @@ services:
 </details>
 
 <details>
-<summary><b>方式三：一键部署（白虎 + 消息推送）</b></summary>
+<summary><b>方式三：一键部署（白虎 + 消息推送）（推荐）</b></summary>
 
 白虎面板本身不内置推送功能，但可以与消息聚合服务配合使用。推荐使用 [Message-Push-Nest](https://github.com/engigu/Message-Push-Nest) 作为统一的消息推送中心。
 
